@@ -1,12 +1,16 @@
 import { eq, sql } from 'drizzle-orm';
+
+import { DbProvider, DrizzleDb } from './client';
 import { NewPolitician, PoliticianWithRankings, Ranking } from '../models';
-import { politicianRankings, politicians } from '../models/politicians.models';
-import { DrizzleDb } from './client';
+import { politicians, politicianRankings } from '../models/politicians.models';
+import { IPoliticianRepo } from './interfaces/IPoliticianRepo';
 
+export class SQLLitePoliticianRepo implements IPoliticianRepo{
+  private readonly db: DrizzleDb;
 
-
-export class PoliticianRepo {
-  constructor(private readonly db: DrizzleDb) {}
+  constructor(provider: DbProvider) {
+    this.db = provider.getDb();
+  }
 
   findAll(): PoliticianWithRankings[] {
     const rows = this.db
@@ -74,7 +78,6 @@ export class PoliticianRepo {
   }
 
 
-
   private groupRankings(
     rows: Array<{ politicians: typeof politicians.$inferSelect; politician_rankings: typeof politicianRankings.$inferSelect | null }>
   ): PoliticianWithRankings[] {
@@ -93,7 +96,7 @@ export class PoliticianRepo {
       }
     }
 
-    // Sort rankings newest first within each politician
+
     for (const p of map.values()) {
       p.rankings.sort((a, b) => b.year - a.year);
     }

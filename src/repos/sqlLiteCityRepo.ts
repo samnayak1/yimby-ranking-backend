@@ -1,12 +1,17 @@
 import { eq, sql } from 'drizzle-orm';
-import { DrizzleDb } from './client';
-import { cities, cityRankings } from '../models/cities.models';
 import { CityWithRankings, NewCity, Ranking } from '../models';
+import { cities, cityRankings } from '../models/cities.models';
+import { DbProvider, DrizzleDb } from './client';
+import { ICityRepo } from './interfaces/ICityRepo';
 
 
 
-export class CityRepo {
-  constructor(private readonly db: DrizzleDb) {}
+export class SQLiteCityRepo implements ICityRepo{
+  private readonly db: DrizzleDb;
+
+  constructor(provider: DbProvider) {
+    this.db = provider.getDb();
+  }
 
   findAll(): CityWithRankings[] {
     const rows = this.db
@@ -73,10 +78,13 @@ export class CityRepo {
     return this.findById(cityId);
   }
 
+  
 
   private groupRankings(
     rows: Array<{ cities: typeof cities.$inferSelect; city_rankings: typeof cityRankings.$inferSelect | null }>
   ): CityWithRankings[] {
+
+    // city id to rank map
     const map = new Map<number, CityWithRankings>();
 
     for (const row of rows) {

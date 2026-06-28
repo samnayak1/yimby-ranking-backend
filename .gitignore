@@ -10,7 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment Variables (Sensitive Data)
+# Environment Variables 
 .env
 .env.local
 .env.development.local
@@ -18,7 +18,7 @@ pnpm-debug.log*
 .env.production.local
 *.env
 
-# Build and Output Directories (If using TypeScript/Babel)
+
 dist/
 build/
 out/
