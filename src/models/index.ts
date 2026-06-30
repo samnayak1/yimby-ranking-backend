@@ -1,6 +1,8 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { politicianRankings, politicians } from "./politicians.models";
 import { cities, cityRankings } from "./cities.models";
+export * from './cities.models'
+export * from './politicians.models'
 
 export type Politician       = InferSelectModel<typeof politicians>;
 export type NewPolitician    = InferInsertModel<typeof politicians>;
