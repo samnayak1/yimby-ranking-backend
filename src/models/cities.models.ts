@@ -14,7 +14,7 @@ export const cities = sqliteTable('cities', {
   createdAt:        text('created_at').default(sql`(datetime('now'))`),
   updatedAt:        text('updated_at').default(sql`(datetime('now'))`),
 });
-//TODO: permits alloted,
+
 
 
 export const cityRankings = sqliteTable('city_rankings', {
@@ -25,6 +25,6 @@ export const cityRankings = sqliteTable('city_rankings', {
   year:      integer('year').notNull(),
   ranking:   integer('ranking').notNull(),
   createdAt: text('created_at').default(sql`(datetime('now'))`),
-}, (t) => ({
-  uniqCityYear: unique().on(t.cityId, t.year),
-}));
+}, (t) => [
+  unique('uq_city_year').on(t.cityId, t.year),
+]);

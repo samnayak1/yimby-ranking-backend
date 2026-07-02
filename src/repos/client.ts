@@ -16,9 +16,8 @@ export interface DbProvider {
   close(): void;
 }
 
-//TODO: put in env
-const DEFAULT_PATH = process.env.DB_PATH
-  ?? path.join(__dirname, '../../db/database.sqlite');
+
+const DEFAULT_PATH = path.join(__dirname, '../../db/database.sqlite');
 
 export class SQLiteProvider implements DbProvider {
   private readonly db: DrizzleDb;

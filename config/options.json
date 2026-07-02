@@ -1,0 +1,35 @@
+{
+  "designations": [
+    "President",
+    "Vice President",
+    "Prime Minister",
+    "Governor",
+    "Mayor",
+    "Senator",
+    "Comptroller",
+    "Chief Minister",
+    "Minister",
+    "MP",
+    "Councillor",
+    "Other"
+  ],
+  "politicalLeanings": [
+    "Liberal",
+    "Conservative",
+    "Democratic Socialist",
+    "Libertarian",
+    "Nationalist",
+    "Green"
+  ],
+  "currencies": [
+    "USD",
+    "GBP",
+    "EUR",
+    "NZD",
+    "AUD",
+    "CAD",
+    "INR",
+    "JPY",
+    "SGD"
+  ]
+}

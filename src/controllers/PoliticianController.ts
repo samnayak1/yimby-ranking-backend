@@ -1,52 +1,100 @@
 import { Request, Response, NextFunction } from 'express';
 import { PoliticianService } from '../services/PoliticianService';
+import {
+  CreatePoliticianDto,
+  UpdatePoliticianDto,
+  UpsertPoliticianRankingDto,
+} from '../schemas/politician.schemas';
+import { PoliticianFilters } from '../models';
 
 export class PoliticianController {
   constructor(private readonly service: PoliticianService) {}
 
-  getAll = (_req: Request, res: Response, next: NextFunction): void => {
+ getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = this.service.getAll();
-      res.json({ data, count: data.length });
-    } catch (err) { next(err); }
+      const {
+        page = 1,
+        limit = 20,
+        sortBy = 'name',
+        sortOrder = 'asc',
+        search,
+        designation,
+        politicalLeaning,
+        nationality,
+        isInOffice,
+        minScore,
+        maxScore,
+        cityId,
+      } = req.query;
+
+      const filters: PoliticianFilters = {
+        page: Number(page),
+        limit: Number(limit),
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as 'asc' | 'desc',
+        search: search as string,
+        designation: designation as string,
+        politicalLeaning: politicalLeaning as string,
+        nationality: nationality as string,
+        isInOffice: isInOffice !== undefined ? isInOffice === 'true' : undefined,
+        minScore: minScore ? Number(minScore) : undefined,
+        maxScore: maxScore ? Number(maxScore) : undefined,
+        cityId: cityId ? Number(cityId) : undefined,
+      };
+
+      const result = await this.service.getAll(filters);
+      res.json(result);
+    } catch (err) {
+      next(err);
+    }
   };
 
-  getById = (req: Request, res: Response, next: NextFunction): void => {
+  getById = (req: Request<{ id: string }>, res: Response, next: NextFunction): void => {
     try {
       const data = this.service.getById(Number(req.params.id));
       res.json({ data });
     } catch (err) { next(err); }
   };
 
-  create = (req: Request, res: Response, next: NextFunction): void => {
+  create = (req: Request<{}, {}, CreatePoliticianDto>, res: Response, next: NextFunction): void => {
     try {
       const data = this.service.create(req.body);
       res.status(201).json({ data });
     } catch (err) { next(err); }
   };
 
-  update = (req: Request, res: Response, next: NextFunction): void => {
+  update = (req: Request<{ id: string }, {}, UpdatePoliticianDto>, res: Response, next: NextFunction): void => {
     try {
       const data = this.service.update(Number(req.params.id), req.body);
       res.json({ data });
     } catch (err) { next(err); }
   };
 
-  delete = (req: Request, res: Response, next: NextFunction): void => {
+  delete = (req: Request<{ id: string }>, res: Response, next: NextFunction): void => {
     try {
       this.service.delete(Number(req.params.id));
       res.status(204).end();
     } catch (err) { next(err); }
   };
 
-  upsertRanking = (req: Request, res: Response, next: NextFunction): void => {
+    getFilterOptions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const [designations, politicalLeanings] = await Promise.all([
+        this.service.getDesignations(),
+        this.service.getPoliticalLeanings(),
+      ]);
+
+      res.json({ designations, politicalLeanings });
+    } catch (err) {
+      next(err);
+    }
+  };
+  
+
+  upsertRanking = (req: Request<{ id: string }, {}, UpsertPoliticianRankingDto>, res: Response, next: NextFunction): void => {
     try {
       const { year, ranking } = req.body;
-      const data = this.service.upsertRanking(
-        Number(req.params.id),
-        Number(year),
-        Number(ranking)
-      );
+      const data = this.service.upsertRanking(Number(req.params.id), year, ranking);
       res.json({ data });
     } catch (err) { next(err); }
   };

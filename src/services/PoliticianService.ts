@@ -1,19 +1,18 @@
 import { IPoliticianRepo } from '../repos/interfaces/IPoliticianRepo';
-import { NewPolitician, PoliticianWithRankings } from '../models';
-import { Designation, PoliticalLeaning } from '../types';
+import { NewPolitician, PaginatedResponse, PoliticianFilters, PoliticianWithRankings } from '../models';
+import {options} from './../config/config'
 import { createError } from '../utils/errorHelper';
 
 
-const DESIGNATIONS = new Set(Object.values(Designation));
-const LEANINGS = new Set(Object.values(PoliticalLeaning));
+const DESIGNATIONS = new Set(Object.values(options.designations));
+const LEANINGS = new Set(Object.values(options.politicalLeanings));
 
 export class PoliticianService {
   constructor(private readonly repo: IPoliticianRepo) {}
 
 
-  //TODO: paginate
-  getAll(): PoliticianWithRankings[] {
-    return this.repo.findAll();
+  async getAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithRankings>> {
+    return this.repo.findAll(filters);
   }
 
   getById(id: number): PoliticianWithRankings {
@@ -64,18 +63,26 @@ export class PoliticianService {
     return this.repo.upsertRanking(id, year, ranking)!;
   }
 
+  async getDesignations(): Promise<string[]> {
+    return this.repo.getDesignations();
+  }
+
+  async getPoliticalLeanings(): Promise<string[]> {
+    return this.repo.getPoliticalLeanings();
+  }
+
   private validate(data: Partial<NewPolitician>): void {
-    if (data.designation && !DESIGNATIONS.has(data.designation as Designation)) {
+    if (data.designation && !DESIGNATIONS.has(data.designation)) {
       throw createError(
         400,
-        `Invalid designation. Valid: ${Object.values(Designation).join(', ')}`
+        `Invalid designation. Valid: ${Object.values(options.designations).join(', ')}`
       );
     }
 
-    if (data.politicalLeaning && !LEANINGS.has(data.politicalLeaning as PoliticalLeaning)) {
+    if (data.politicalLeaning && !LEANINGS.has(data.politicalLeaning)) {
       throw createError(
         400,
-        `Invalid political leaning. Valid: ${Object.values(PoliticalLeaning).join(', ')}`
+        `Invalid political leaning. Valid: ${Object.values(options.politicalLeanings).join(', ')}`
       );
     }
   }

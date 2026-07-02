@@ -1,13 +1,12 @@
 import { ICityRepo } from '../repos/interfaces/ICityRepo';
-import { NewCity, CityWithRankings } from '../models/index';
+import { NewCity, CityWithRankings, CityFilters, PaginatedResponse } from '../models/index';
 import { createError } from '../utils/errorHelper';
 
 export class CityService {
   constructor(private readonly repo: ICityRepo) { }
 
-  //TODO: paginate
-  getAll(): CityWithRankings[] {
-    return this.repo.findAll();
+  async getAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRankings>> {
+    return this.repo.findAll(filters);
   }
 
   getById(id: number): CityWithRankings {
@@ -46,6 +45,14 @@ export class CityService {
   delete(id: number): void {
     this.getById(id);
     this.repo.delete(id);
+  }
+  
+  async getCountries(): Promise<string[]> {
+    return this.repo.getCountries();
+  }
+
+  async getRegions(): Promise<string[]> {
+    return this.repo.getRegions();
   }
 
   upsertRanking(id: number, year: number, ranking: number): CityWithRankings {

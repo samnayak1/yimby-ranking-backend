@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 
 import { DbProvider, DrizzleDb } from './client';
-import { NewPolitician, PoliticianWithRankings, Ranking } from '../models';
+import { NewPolitician, PoliticianFilters, PoliticianWithRankings, Ranking } from '../models';
 import { politicians, politicianRankings } from '../models/politicians.models';
 import { IPoliticianRepo } from './interfaces/IPoliticianRepo';
 
@@ -12,15 +12,94 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     this.db = provider.getDb();
   }
 
-  findAll(): PoliticianWithRankings[] {
-    const rows = this.db
+
+
+  async findAll(filters?: PoliticianFilters) {
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'name',
+      sortOrder = 'asc',
+      search,
+      designation,
+      politicalLeaning,
+      nationality,
+      isInOffice,
+    } = filters || {};
+
+    const conditions = [];
+
+    if (search) {
+      conditions.push(
+        sql`(${politicians.name} LIKE ${`%${search}%`} OR 
+             ${politicians.designation} LIKE ${`%${search}%`} OR 
+             ${politicians.nationality} LIKE ${`%${search}%`} OR 
+             ${politicians.politicalLeaning} LIKE ${`%${search}%`})`
+      );
+    }
+
+    if (designation) {
+      conditions.push(eq(politicians.designation, designation));
+    }
+
+    if (politicalLeaning) {
+      conditions.push(eq(politicians.politicalLeaning, politicalLeaning));
+    }
+
+    if (nationality) {
+      conditions.push(eq(politicians.nationality, nationality));
+    }
+
+    if (isInOffice !== undefined) {
+      conditions.push(eq(politicians.isInOffice, isInOffice ? 1 : 0));
+    }
+
+   
+    const whereClause = conditions.length > 0 ? sql`${sql.join(conditions, sql` AND `)}` : sql`1=1`;
+
+    // Get total count
+    const totalResult = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(politicians)
+      .where(whereClause);
+
+    const total = totalResult[0]?.count || 0;
+
+    // Get paginated data
+    const offset = (page - 1) * limit;
+    
+    const orderByColumn = sortBy === 'name' ? politicians.name :
+                          sortBy === 'designation' ? politicians.designation :
+                          sortBy === 'nationality' ? politicians.nationality :
+                          sortBy === 'politicalLeaning' ? politicians.politicalLeaning :
+                          politicians.name;
+
+    const orderByClause = sortOrder === 'desc' 
+      ? sql`${orderByColumn} DESC`
+      : sql`${orderByColumn} ASC`;
+
+    const rows = await this.db
       .select()
       .from(politicians)
       .leftJoin(politicianRankings, eq(politicianRankings.politicianId, politicians.id))
-      .orderBy(politicians.name)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset)
       .all();
 
-    return this.groupRankings(rows);
+    const data = this.groupRankings(rows);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      filters: filters || {},
+    };
   }
 
   findById(id: number): PoliticianWithRankings | null {
@@ -77,6 +156,31 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     return this.findById(politicianId);
   }
 
+   // Optional: Get distinct designations for filter dropdowns
+   async getDesignations(): Promise<string[]> {
+    const result = this.db
+      .select({ designation: politicians.designation })
+      .from(politicians)
+      .where(sql`${politicians.designation} IS NOT NULL`)
+      .groupBy(politicians.designation)
+      .all();
+
+    const designations = result.map(r => r.designation);
+    return designations.filter((designation): designation is string => designation !== null);
+  }
+
+  // Get distinct political leanings for filter dropdowns
+  async getPoliticalLeanings(): Promise<string[]> {
+    const result =  this.db
+      .select({ politicalLeaning: politicians.politicalLeaning })
+      .from(politicians)
+      .where(sql`${politicians.politicalLeaning} IS NOT NULL`)
+      .groupBy(politicians.politicalLeaning)
+      .all();
+
+    const politicalLeanings = result.map(r => r.politicalLeaning);
+    return politicalLeanings.filter((leaning): leaning is string => leaning !== null);
+  }
 
   private groupRankings(
     rows: Array<{ politicians: typeof politicians.$inferSelect; politician_rankings: typeof politicianRankings.$inferSelect | null }>

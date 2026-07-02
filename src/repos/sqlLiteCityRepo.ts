@@ -1,5 +1,5 @@
-import { eq, sql } from 'drizzle-orm';
-import { CityWithRankings, NewCity, Ranking } from '../models';
+import { and, asc, desc, eq, gte, like, lte, or, sql } from 'drizzle-orm';
+import { CityFilters, CityWithRankings, NewCity, PaginatedResponse, Ranking } from '../models';
 import { cities, cityRankings } from '../models/cities.models';
 import { DbProvider, DrizzleDb } from './client';
 import { ICityRepo } from './interfaces/ICityRepo';
@@ -13,16 +13,100 @@ export class SQLiteCityRepo implements ICityRepo{
     this.db = provider.getDb();
   }
 
-  findAll(): CityWithRankings[] {
-    const rows = this.db
+
+  async findAll(filters?: CityFilters) {
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'name',
+      sortOrder = 'asc',
+      search,
+      country,
+      region,
+      minPrice,
+      maxPrice,
+    } = filters || {};
+
+
+    const conditions = [];
+
+    if (search) {
+     
+      conditions.push(
+        sql`(${cities.name} LIKE ${`%${search}%`} OR 
+             ${cities.country} LIKE ${`%${search}%`} OR 
+             ${cities.region} LIKE ${`%${search}%`})`
+      );
+    }
+
+    if (country) {
+      conditions.push(eq(cities.country, country));
+    }
+
+    if (region) {
+      conditions.push(eq(cities.region, region));
+    }
+
+    if (minPrice !== undefined) {
+      conditions.push(sql`${cities.medianHousePrice} >= ${minPrice}`);
+    }
+
+    if (maxPrice !== undefined) {
+      conditions.push(sql`${cities.medianHousePrice} <= ${maxPrice}`);
+    }
+
+    // Get total count
+    const whereClause = conditions.length > 0 ? sql`${sql.join(conditions, sql` AND `)}` : sql`1=1`;
+    
+    const totalResult = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(cities)
+      .where(whereClause);
+
+    const total = totalResult[0]?.count || 0;
+
+    const offset = (page - 1) * limit;
+    
+
+    const orderByColumn = sortBy === 'name' ? cities.name :
+                          sortBy === 'country' ? cities.country :
+                          sortBy === 'region' ? cities.region :
+                          sortBy === 'medianHousePrice' ? cities.medianHousePrice :
+                          cities.name;
+
+    const orderByClause = sortOrder === 'desc' 
+      ? sql`${orderByColumn} DESC`
+      : sql`${orderByColumn} ASC`;
+
+    const rows = await this.db
       .select()
       .from(cities)
       .leftJoin(cityRankings, eq(cityRankings.cityId, cities.id))
-      .orderBy(cities.name)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset)
       .all();
 
-    return this.groupRankings(rows);
+    const data = this.groupRankings(rows);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      filters: filters || {},
+    };
   }
+
+
+
+
+
+
 
   findById(id: number): CityWithRankings | null {
     const rows = this.db
@@ -76,6 +160,34 @@ export class SQLiteCityRepo implements ICityRepo{
       .run();
 
     return this.findById(cityId);
+  }
+
+
+    // Get distinct countries for filter dropdowns
+    async getCountries(): Promise<string[]> {
+    const result = this.db
+      .select({ country: cities.country })
+      .from(cities)
+      .groupBy(cities.country)
+      .all();
+
+    
+      
+      return result.map(r => r.country).filter((c): c is string => c !== null);
+  }
+
+  // Get distinct regions for filter dropdowns
+  async getRegions(): Promise<string[]> {
+    const result = this.db
+      .select({ region: cities.region })
+      .from(cities)
+      .where(sql`${cities.region} IS NOT NULL`)
+      .groupBy(cities.region)
+      .all();
+
+    const regions = result.map(r => r.region);
+  
+    return regions.filter((region): region is string => region !== null);
   }
 
   
