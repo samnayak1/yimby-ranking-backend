@@ -13,7 +13,7 @@ CREATE TABLE `politicians` (
 	`name` text NOT NULL,
 	`designation` text,
 	`is_in_office` integer DEFAULT 1 NOT NULL,
-	`nationality` text,
+	`nationality_code` text NOT NULL,
 	`political_leaning` text,
 	`notes` text,
 	`created_at` text DEFAULT (datetime('now')),
@@ -23,7 +23,7 @@ CREATE TABLE `politicians` (
 CREATE TABLE `cities` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
-	`country` text NOT NULL,
+	`country_code` text NOT NULL,
 	`region` text,
 	`median_house_price` real,
 	`currency` text DEFAULT 'USD',
@@ -43,4 +43,4 @@ CREATE TABLE `city_rankings` (
 	FOREIGN KEY (`city_id`) REFERENCES `cities`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `city_rankings_city_id_year_unique` ON `city_rankings` (`city_id`,`year`);
+CREATE UNIQUE INDEX `uq_city_year` ON `city_rankings` (`city_id`,`year`);

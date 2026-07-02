@@ -24,7 +24,8 @@ export class CityService {
      if (data.lng != null && (data.lng < -180 || data.lng > 180)) {
       throw createError(400, "Longitutse must be between -180 and 180");
     }
-    return this.repo.create({ ...data, name: data.name.trim(), country: data.country.trim() });
+
+    return this.repo.create({ ...data, name: data.name.trim(), countryCode: data.countryCode });
   }
 
   update(id: number, data: Partial<NewCity>): CityWithRankings {

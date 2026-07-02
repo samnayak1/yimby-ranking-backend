@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "fa2f20af-1944-4748-9750-c7cd9873f6a2",
+  "id": "58b0f276-921f-4d51-be23-ed4d100c01e3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "politician_rankings": {
@@ -105,11 +105,11 @@
           "autoincrement": false,
           "default": 1
         },
-        "nationality": {
-          "name": "nationality",
+        "nationality_code": {
+          "name": "nationality_code",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "political_leaning": {
@@ -166,8 +166,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "country": {
-          "name": "country",
+        "country_code": {
+          "name": "country_code",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -280,8 +280,8 @@
         }
       },
       "indexes": {
-        "city_rankings_city_id_year_unique": {
-          "name": "city_rankings_city_id_year_unique",
+        "uq_city_year": {
+          "name": "uq_city_year",
           "columns": [
             "city_id",
             "year"

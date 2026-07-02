@@ -11,7 +11,7 @@ export const createPoliticianSchema = z.object({
   name:             z.string().trim().min(1, 'Name is required'),
   designation:      z.enum(DESIGNATIONS).optional(),
   isInOffice:       z.number().int().min(0).max(1).default(1),
-  nationality:      z.string().trim().optional(),
+  nationalityCode:      z.string().trim(),
   politicalLeaning: z.enum(LEANINGS).optional(),
   notes:            z.string().trim().optional(),
 });

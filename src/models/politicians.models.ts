@@ -6,7 +6,7 @@ export const politicians = sqliteTable('politicians', {
   name:             text('name').notNull(),
   designation:      text('designation'),
   isInOffice:       integer('is_in_office').notNull().default(1),
-  nationality:      text('nationality'),
+  nationalityCode:      text('nationality_code').notNull(),
   politicalLeaning: text('political_leaning'),
   notes:            text('notes'),
   createdAt:        text('created_at').default(sql`(datetime('now'))`),

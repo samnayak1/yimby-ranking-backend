@@ -23,7 +23,7 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
       search,
       designation,
       politicalLeaning,
-      nationality,
+      nationalityCode,
       isInOffice,
     } = filters || {};
 
@@ -31,10 +31,7 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
 
     if (search) {
       conditions.push(
-        sql`(${politicians.name} LIKE ${`%${search}%`} OR 
-             ${politicians.designation} LIKE ${`%${search}%`} OR 
-             ${politicians.nationality} LIKE ${`%${search}%`} OR 
-             ${politicians.politicalLeaning} LIKE ${`%${search}%`})`
+        sql`(${politicians.name} LIKE ${`%${search}%`})`
       );
     }
 
@@ -46,8 +43,8 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
       conditions.push(eq(politicians.politicalLeaning, politicalLeaning));
     }
 
-    if (nationality) {
-      conditions.push(eq(politicians.nationality, nationality));
+    if (nationalityCode) {
+      conditions.push(eq(politicians.nationalityCode, nationalityCode));
     }
 
     if (isInOffice !== undefined) {
@@ -70,7 +67,7 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     
     const orderByColumn = sortBy === 'name' ? politicians.name :
                           sortBy === 'designation' ? politicians.designation :
-                          sortBy === 'nationality' ? politicians.nationality :
+                          sortBy === 'nationalityCode' ? politicians.nationalityCode :
                           sortBy === 'politicalLeaning' ? politicians.politicalLeaning :
                           politicians.name;
 
@@ -78,7 +75,7 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
       ? sql`${orderByColumn} DESC`
       : sql`${orderByColumn} ASC`;
 
-    const rows = await this.db
+    const rows = this.db
       .select()
       .from(politicians)
       .leftJoin(politicianRankings, eq(politicianRankings.politicianId, politicians.id))

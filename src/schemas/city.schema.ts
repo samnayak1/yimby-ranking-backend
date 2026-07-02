@@ -5,7 +5,7 @@ const CURRENCIES = options.currencies;
 
 export const createCitySchema = z.object({
   name:             z.string().trim().min(1, 'Name is required'),
-  country:          z.string().trim().min(1, 'Country is required'),
+  countryCode:          z.string().trim().min(1, 'Country is required'),
   region:           z.string().trim().optional(),
   medianHousePrice: z.number().nonnegative().optional(),
   currency:         z.enum(CURRENCIES).default('USD'),

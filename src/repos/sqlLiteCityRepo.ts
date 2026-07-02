@@ -21,7 +21,7 @@ export class SQLiteCityRepo implements ICityRepo{
       sortBy = 'name',
       sortOrder = 'asc',
       search,
-      country,
+      countryCode,
       region,
       minPrice,
       maxPrice,
@@ -33,14 +33,13 @@ export class SQLiteCityRepo implements ICityRepo{
     if (search) {
      
       conditions.push(
-        sql`(${cities.name} LIKE ${`%${search}%`} OR 
-             ${cities.country} LIKE ${`%${search}%`} OR 
+        sql`(${cities.name} LIKE ${`%${search}%`} OR
              ${cities.region} LIKE ${`%${search}%`})`
       );
     }
 
-    if (country) {
-      conditions.push(eq(cities.country, country));
+    if (countryCode) {
+      conditions.push(eq(cities.countryCode, countryCode));
     }
 
     if (region) {
@@ -69,7 +68,7 @@ export class SQLiteCityRepo implements ICityRepo{
     
 
     const orderByColumn = sortBy === 'name' ? cities.name :
-                          sortBy === 'country' ? cities.country :
+                          sortBy === 'countryCode' ? cities.countryCode :
                           sortBy === 'region' ? cities.region :
                           sortBy === 'medianHousePrice' ? cities.medianHousePrice :
                           cities.name;
@@ -166,14 +165,14 @@ export class SQLiteCityRepo implements ICityRepo{
     // Get distinct countries for filter dropdowns
     async getCountries(): Promise<string[]> {
     const result = this.db
-      .select({ country: cities.country })
+      .select({ countryCode: cities.countryCode })
       .from(cities)
-      .groupBy(cities.country)
+      .groupBy(cities.countryCode)
       .all();
 
     
       
-      return result.map(r => r.country).filter((c): c is string => c !== null);
+      return result.map(r => r.countryCode).filter((c): c is string => c !== null);
   }
 
   // Get distinct regions for filter dropdowns

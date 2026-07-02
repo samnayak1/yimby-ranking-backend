@@ -4,9 +4,9 @@ import { integer, real, sqliteTable, text, unique } from "drizzle-orm/sqlite-cor
 export const cities = sqliteTable('cities', {
   id:               integer('id').primaryKey({ autoIncrement: true }),
   name:             text('name').notNull(),
-  country:          text('country').notNull(),
+  countryCode:      text('country_code').notNull(),
   region:           text('region'),
-  medianHousePrice: real('median_house_price'),
+  medianHousePrice: real('median_house_price'),  //in USD
   currency:         text('currency').default('USD'),
   notes:            text('notes'),
   lat:              real('lat'),

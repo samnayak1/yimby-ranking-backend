@@ -25,7 +25,7 @@ export type CityWithRankings       = City       & { rankings: Ranking[] };
 //TODO: Move these to a separate file
 export interface CityFilters extends PaginationParams {
   search?: string;
-  country?: string;
+  countryCode?: string;
   region?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -38,7 +38,7 @@ export interface PoliticianFilters extends PaginationParams {
   search?: string;
   designation?: string;
   politicalLeaning?: string;
-  nationality?: string;
+  nationalityCode?: string;
   isInOffice?: boolean;
   minScore?: number;
   maxScore?: number;
