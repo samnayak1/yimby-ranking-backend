@@ -1,8 +1,8 @@
 import { eq, sql } from 'drizzle-orm';
 
 import { DbProvider, DrizzleDb } from './client';
-import { NewPolitician, PoliticianFilters, PoliticianWithRankings, Ranking } from '../models';
-import { politicians, politicianRankings } from '../models/politicians.models';
+import { NewPolitician, PoliticianFilters, PoliticianWithRatings, Rating} from '../models';
+import { politicianRatings, politicians } from '../models/politicians.models';
 import { IPoliticianRepo } from './interfaces/IPoliticianRepo';
 
 export class SQLLitePoliticianRepo implements IPoliticianRepo{
@@ -78,14 +78,14 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     const rows = this.db
       .select()
       .from(politicians)
-      .leftJoin(politicianRankings, eq(politicianRankings.politicianId, politicians.id))
+      .leftJoin(politicianRatings, eq(politicianRatings.politicianId, politicians.id))
       .where(whereClause)
       .orderBy(orderByClause)
       .limit(limit)
       .offset(offset)
       .all();
 
-    const data = this.groupRankings(rows);
+    const data = this.groupRatings(rows);
 
     return {
       data,
@@ -99,29 +99,29 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     };
   }
 
-  findById(id: number): PoliticianWithRankings | null {
+  findById(id: number): PoliticianWithRatings | null {
     const rows = this.db
       .select()
       .from(politicians)
-      .leftJoin(politicianRankings, eq(politicianRankings.politicianId, politicians.id))
+      .leftJoin(politicianRatings, eq(politicianRatings.politicianId, politicians.id))
       .where(eq(politicians.id, id))
       .all();
 
     if (rows.length === 0) return null;
-    return this.groupRankings(rows)[0];
+    return this.groupRatings(rows)[0];
   }
 
-  create(data: NewPolitician): PoliticianWithRankings {
+  create(data: NewPolitician): PoliticianWithRatings {
     const [row] = this.db
       .insert(politicians)
       .values(data)
       .returning()
       .all();
 
-    return { ...row, rankings: [] };
+    return { ...row, ratings: [] };
   }
 
-  update(id: number, data: Partial<NewPolitician>): PoliticianWithRankings | null {
+  update(id: number, data: Partial<NewPolitician>): PoliticianWithRatings | null {
     this.db
       .update(politicians)
       .set({ ...data, updatedAt: sql`(datetime('now'))` })
@@ -140,13 +140,13 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     return result.changes > 0;
   }
 
-  upsertRanking(politicianId: number, year: number, ranking: number): PoliticianWithRankings | null {
+  upsertRating(politicianId: number, year: number, rating: number): PoliticianWithRatings | null {
     this.db
-      .insert(politicianRankings)
-      .values({ politicianId, year, ranking })
+      .insert(politicianRatings)
+      .values({ politicianId, year, rating: rating })
       .onConflictDoUpdate({
-        target: [politicianRankings.politicianId, politicianRankings.year],
-        set: { ranking },
+        target: [politicianRatings.politicianId, politicianRatings.year],
+        set: { rating: sql`${rating}`},
       })
       .run();
 
@@ -179,27 +179,27 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     return politicalLeanings.filter((leaning): leaning is string => leaning !== null);
   }
 
-  private groupRankings(
-    rows: Array<{ politicians: typeof politicians.$inferSelect; politician_rankings: typeof politicianRankings.$inferSelect | null }>
-  ): PoliticianWithRankings[] {
-    const map = new Map<number, PoliticianWithRankings>();
+  private groupRatings(
+    rows: Array<{ politicians: typeof politicians.$inferSelect; politician_ratings: typeof politicianRatings.$inferSelect | null }>
+  ): PoliticianWithRatings[] {
+    const map = new Map<number, PoliticianWithRatings>();
 
     for (const row of rows) {
       const p = row.politicians;
       if (!map.has(p.id)) {
-        map.set(p.id, { ...p, rankings: [] });
+        map.set(p.id, { ...p, ratings: [] });
       }
-      if (row.politician_rankings) {
-        map.get(p.id)!.rankings.push({
-          year: row.politician_rankings.year,
-          ranking: row.politician_rankings.ranking,
-        } satisfies Ranking);
+      if (row.politician_ratings) {
+        map.get(p.id)!.ratings.push({
+          year: row.politician_ratings.year,
+          rating: row.politician_ratings.rating,
+        } satisfies Rating);
       }
     }
 
 
     for (const p of map.values()) {
-      p.rankings.sort((a, b) => b.year - a.year);
+      p.ratings.sort((a, b) => b.year - a.year);
     }
 
     return [...map.values()];

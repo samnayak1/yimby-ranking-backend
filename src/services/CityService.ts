@@ -1,21 +1,21 @@
 import { ICityRepo } from '../repos/interfaces/ICityRepo';
-import { NewCity, CityWithRankings, CityFilters, PaginatedResponse } from '../models/index';
+import { NewCity, CityFilters, PaginatedResponse, UpsertCityMetrics, CityWithRatings } from '../models/index';
 import { createError } from '../utils/errorHelper';
 
 export class CityService {
   constructor(private readonly repo: ICityRepo) { }
 
-  async getAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRankings>> {
+  async getAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRatings>> {
     return this.repo.findAll(filters);
   }
 
-  getById(id: number): CityWithRankings {
+  getById(id: number): CityWithRatings {
     const city = this.repo.findById(id);
     if (!city) throw Object.assign(new Error('City not found'), { status: 404 });
     return city;
   }
 
-  create(data: NewCity): CityWithRankings {
+  create(data: NewCity): CityWithRatings {
 
 
     if (data.lat != null && (data.lat < -90 || data.lat > 90)) {
@@ -28,7 +28,7 @@ export class CityService {
     return this.repo.create({ ...data, name: data.name.trim(), countryCode: data.countryCode });
   }
 
-  update(id: number, data: Partial<NewCity>): CityWithRankings {
+  update(id: number, data: Partial<NewCity>): CityWithRatings {
     this.getById(id);
     if (data.medianHousePrice != null && data.medianHousePrice < 0) {
       throw createError(400, "Median housing price must be a postivie -90 and 90");
@@ -56,14 +56,89 @@ export class CityService {
     return this.repo.getRegions();
   }
 
-  upsertRanking(id: number, year: number, ranking: number): CityWithRankings {
-    this.getById(id);
-    if (year < 2000 || year > new Date().getFullYear() + 1) {
-      throw Object.assign(new Error('Invalid year'), { status: 400 });
-    }
-    if (ranking < 1 || ranking > 10) {
-      throw Object.assign(new Error('Ranking must be between 1 and 10'), { status: 400 });
-    }
-    return this.repo.upsertRanking(id, year, ranking)!;
+  
+
+  upsertMetrics(
+  id: number,
+  metrics: UpsertCityMetrics
+): CityWithRatings {
+  this.getById(id);
+
+  const currentYear = new Date().getFullYear();
+
+  if (metrics.year && (metrics.year < 2000 || metrics.year > currentYear + 1)) {
+    throw Object.assign(new Error("Invalid year"), { status: 400 });
   }
+
+  if (metrics.rating && (metrics.rating < 1 || metrics.rating > 10 )) {
+    throw Object.assign(
+      new Error("rating score must be between 1 and 10"),
+      { status: 400 }
+    );
+  }
+
+  if (
+    metrics.averagePermitDays != null &&
+    metrics.averagePermitDays < 0
+  ) {
+    throw Object.assign(
+      new Error("Average permit days cannot be negative"),
+      { status: 400 }
+    );
+  }
+
+  if (
+    metrics.permitsIssued != null &&
+    metrics.permitsIssued < 0
+  ) {
+    throw Object.assign(
+      new Error("Permits issued cannot be negative"),
+      { status: 400 }
+    );
+  }
+
+  if (
+    metrics.housingStarts != null &&
+    metrics.housingStarts < 0
+  ) {
+    throw Object.assign(
+      new Error("Housing starts cannot be negative"),
+      { status: 400 }
+    );
+  }
+
+  if (
+    metrics.homesCompleted != null &&
+    metrics.homesCompleted < 0
+  ) {
+    throw Object.assign(
+      new Error("Homes completed cannot be negative"),
+      { status: 400 }
+    );
+  }
+
+  if (
+    metrics.population != null &&
+    metrics.population < 0
+  ) {
+    throw Object.assign(
+      new Error("Population cannot be negative"),
+      { status: 400 }
+    );
+  }
+
+  if (
+    metrics.permitsPer1000Residents != null &&
+    metrics.permitsPer1000Residents < 0
+  ) {
+    throw Object.assign(
+      new Error("Permits per 1,000 residents cannot be negative"),
+      { status: 400 }
+    );
+  }
+
+  return this.repo.upsertMetrics(id, metrics)!;
+}
+
+
 }

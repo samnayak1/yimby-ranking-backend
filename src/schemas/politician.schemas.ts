@@ -18,11 +18,11 @@ export const createPoliticianSchema = z.object({
 
 export const updatePoliticianSchema = createPoliticianSchema.partial();
 
-export const upsertPoliticianRankingSchema = z.object({
+export const upsertPoliticianRatingSchema = z.object({
   year:    z.number().int().min(2000).max(new Date().getFullYear() + 1),
-  ranking: z.number().int().min(1).max(10),
+  rating: z.number().int().min(1).max(10),
 });
 
 export type CreatePoliticianDto        = z.infer<typeof createPoliticianSchema>;
 export type UpdatePoliticianDto        = z.infer<typeof updatePoliticianSchema>;
-export type UpsertPoliticianRankingDto = z.infer<typeof upsertPoliticianRankingSchema>;
+export type UpsertPoliticianRatingDto = z.infer<typeof upsertPoliticianRatingSchema>;

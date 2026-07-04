@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, gte, like, lte, or, sql } from 'drizzle-orm';
-import { CityFilters, CityWithRankings, NewCity, PaginatedResponse, Ranking } from '../models';
-import { cities, cityRankings } from '../models/cities.models';
+import { eq, sql } from 'drizzle-orm';
+import { CityFilters ,CityRating,CityWithRatings,NewCity, UpsertCityMetrics } from '../models';
+import { cities, cityRatings, } from '../models/cities.models';
 import { DbProvider, DrizzleDb } from './client';
 import { ICityRepo } from './interfaces/ICityRepo';
 
@@ -77,17 +77,17 @@ export class SQLiteCityRepo implements ICityRepo{
       ? sql`${orderByColumn} DESC`
       : sql`${orderByColumn} ASC`;
 
-    const rows = await this.db
+    const rows = this.db
       .select()
       .from(cities)
-      .leftJoin(cityRankings, eq(cityRankings.cityId, cities.id))
+      .leftJoin(cityRatings, eq(cityRatings.cityId, cities.id))
       .where(whereClause)
       .orderBy(orderByClause)
       .limit(limit)
       .offset(offset)
       .all();
 
-    const data = this.groupRankings(rows);
+    const data = this.groupRating(rows);
 
     return {
       data,
@@ -107,29 +107,29 @@ export class SQLiteCityRepo implements ICityRepo{
 
 
 
-  findById(id: number): CityWithRankings | null {
+  findById(id: number): CityWithRatings | null {
     const rows = this.db
       .select()
       .from(cities)
-      .leftJoin(cityRankings, eq(cityRankings.cityId, cities.id))
+      .leftJoin(cityRatings, eq(cityRatings.cityId, cities.id))
       .where(eq(cities.id, id))
       .all();
 
     if (rows.length === 0) return null;
-    return this.groupRankings(rows)[0];
+    return this.groupRating(rows)[0];
   }
 
-  create(data: NewCity): CityWithRankings {
+  create(data: NewCity): CityWithRatings {
     const [row] = this.db
       .insert(cities)
       .values(data)
       .returning()
       .all();
 
-    return { ...row, rankings: [] };
+    return { ...row, ratings: [] };
   }
 
-  update(id: number, data: Partial<NewCity>): CityWithRankings | null {
+  update(id: number, data: Partial<NewCity>): CityWithRatings | null {
     this.db
       .update(cities)
       .set({ ...data, updatedAt: sql`(datetime('now'))` })
@@ -148,18 +148,27 @@ export class SQLiteCityRepo implements ICityRepo{
     return result.changes > 0;
   }
 
-  upsertRanking(cityId: number, year: number, ranking: number): CityWithRankings | null {
-    this.db
-      .insert(cityRankings)
-      .values({ cityId, year, ranking })
-      .onConflictDoUpdate({
-        target: [cityRankings.cityId, cityRankings.year],
-        set: { ranking },
-      })
-      .run();
+ upsertMetrics(
+  cityId: number,
+  metrics: UpsertCityMetrics
+): CityWithRatings | null {
+  const { year, ...values } = metrics;
 
-    return this.findById(cityId);
-  }
+  this.db
+    .insert(cityRatings)
+    .values({
+      cityId,
+      year,
+      ...values,
+    })
+    .onConflictDoUpdate({
+      target: [cityRatings.cityId, cityRatings.year],
+      set: values,
+    })
+    .run();
+
+  return this.findById(cityId);
+}
 
 
     // Get distinct countries for filter dropdowns
@@ -190,31 +199,44 @@ export class SQLiteCityRepo implements ICityRepo{
   }
 
   
+private groupRating(
+  rows: Array<{
+    cities: typeof cities.$inferSelect;
+    city_ratings: typeof cityRatings.$inferSelect | null;
+  }>
+): CityWithRatings[] {
+  const map = new Map<number, CityWithRatings>();
 
-  private groupRankings(
-    rows: Array<{ cities: typeof cities.$inferSelect; city_rankings: typeof cityRankings.$inferSelect | null }>
-  ): CityWithRankings[] {
+  for (const row of rows) {
+    const city = row.cities;
 
-    // city id to rank map
-    const map = new Map<number, CityWithRankings>();
-
-    for (const row of rows) {
-      const c = row.cities;
-      if (!map.has(c.id)) {
-        map.set(c.id, { ...c, rankings: [] });
-      }
-      if (row.city_rankings) {
-        map.get(c.id)!.rankings.push({
-          year: row.city_rankings.year,
-          ranking: row.city_rankings.ranking,
-        } satisfies Ranking);
-      }
+    if (!map.has(city.id)) {
+      map.set(city.id, {
+        ...city,
+        ratings: [],
+      });
     }
 
-    for (const c of map.values()) {
-      c.rankings.sort((a, b) => b.year - a.year);
+    if (row.city_ratings) {
+      map.get(city.id)!.ratings.push({
+  year: row.city_ratings.year,
+  permitsIssued: row.city_ratings.permitsIssued ?? undefined,
+  rating: row.city_ratings.rating ?? undefined,
+  permitsPer1000Residents:
+    row.city_ratings.permitsPer1000Residents ?? undefined,
+  housingStarts: row.city_ratings.housingStarts ?? undefined,
+  homesCompleted: row.city_ratings.homesCompleted ?? undefined,
+  averagePermitDays:
+    row.city_ratings.averagePermitDays ?? undefined,
+  population: row.city_ratings.population ?? undefined,
+});
     }
-
-    return [...map.values()];
   }
+
+  for (const city of map.values()) {
+    city.ratings.sort((a, b) => b.year - a.year);
+  }
+
+  return Array.from(map.values());
+}
 }

@@ -14,12 +14,12 @@ export const politicians = sqliteTable('politicians', {
 });
 
 
-export const politicianRankings = sqliteTable('politician_rankings', {
+export const politicianRatings = sqliteTable('politician_ratings', {
   id:           integer('id').primaryKey({ autoIncrement: true }),
   politicianId: integer('politician_id')
                   .notNull()
                   .references(() => politicians.id, { onDelete: 'cascade' }),
   year:         integer('year').notNull(),
-  ranking:      integer('ranking').notNull(),
+  rating:      integer('rating').notNull(),
   createdAt:    text('created_at').default(sql`(datetime('now'))`),
 }, (t) => [ unique('uq_politician_year').on(t.politicianId, t.year) ])

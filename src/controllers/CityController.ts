@@ -3,16 +3,16 @@ import { CityService } from '../services/CityService';
 import {
   CreateCityDto,
   UpdateCityDto,
-  UpsertCityRankingDto,
+  UpsertCityRatingDto,
 } from '../schemas/city.schema';
 import { CityFilters } from '../models';
 
 export class CityController {
-  constructor(private readonly service: CityService) {}
+  constructor(private readonly service: CityService) { }
 
-    getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      
+
       const {
         page = 1,
         limit = 20,
@@ -55,38 +55,42 @@ export class CityController {
       res.json({ data });
     } catch (err) {
       console.error('Error in getById:', err);
-       next(err); }
+      next(err);
+    }
   };
 
   create = (req: Request<{}, {}, CreateCityDto>, res: Response, next: NextFunction): void => {
     try {
       const data = this.service.create(req.body);
       res.status(201).json({ data });
-    } catch (err) { 
+    } catch (err) {
       console.error('Error in create:', err);
-      next(err); }
+      next(err);
+    }
   };
 
   update = (req: Request<{ id: string }, {}, UpdateCityDto>, res: Response, next: NextFunction): void => {
     try {
       const data = this.service.update(Number(req.params.id), req.body);
       res.json({ data });
-    } catch (err) { 
+    } catch (err) {
       console.error('Error in update:', err);
-      next(err); }
+      next(err);
+    }
   };
 
   delete = (req: Request<{ id: string }>, res: Response, next: NextFunction): void => {
     try {
       this.service.delete(Number(req.params.id));
       res.status(204).end();
-    } catch (err) { 
+    } catch (err) {
       console.error('Error in delete:', err);
-      next(err); }
+      next(err);
+    }
   };
 
-  
-    getFilterOptions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+  getFilterOptions = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const [countries, regions] = await Promise.all([
         this.service.getCountries(),
@@ -95,18 +99,26 @@ export class CityController {
 
       res.json({ countries, regions });
     } catch (err) {
-     console.error('Error in getFilterOptions:', err);
+      console.error('Error in getFilterOptions:', err);
       next(err);
     }
   };
 
-  upsertRanking = (req: Request<{ id: string }, {}, UpsertCityRankingDto>, res: Response, next: NextFunction): void => {
+  upsertMetrics = (
+    req: Request<{ id: string }, {}, UpsertCityRatingDto>,
+    res: Response,
+    next: NextFunction,
+  ): void => {
     try {
-      const { year, ranking } = req.body;
-      const data = this.service.upsertRanking(Number(req.params.id), year, ranking);
+      const data = this.service.upsertMetrics(
+        Number(req.params.id),
+        req.body,
+      );
+
       res.json({ data });
-    } catch (err) { 
-      console.error('Error in upsertRanking:', err);
-      next(err); }
+    } catch (err) {
+      console.error('Error in upsertMetrics:', err);
+      next(err);
+    }
   };
 }

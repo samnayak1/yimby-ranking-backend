@@ -1,12 +1,15 @@
-import { CityFilters, CityWithRankings, NewCity, PaginatedResponse } from "../../models";
+import { CityFilters, CityWithRatings, NewCity, PaginatedResponse, UpsertCityMetrics } from "../../models";
 
 export interface ICityRepo {
-  findAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRankings>>;
-  findById(id: number): CityWithRankings | null;
-  create(data: NewCity): CityWithRankings;
-  update(id: number, data: Partial<NewCity>): CityWithRankings | null;
+  findAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRatings>>;
+  findById(id: number): CityWithRatings | null;
+  create(data: NewCity): CityWithRatings;
+  update(id: number, data: Partial<NewCity>): CityWithRatings | null;
   delete(id: number): boolean;
   getCountries(): Promise<string[]>;
   getRegions(): Promise<string[]>;
-  upsertRanking(cityId: number, year: number, ranking: number): CityWithRankings | null;
+  upsertMetrics(
+    cityId: number,
+    metrics: UpsertCityMetrics
+  ): CityWithRatings | null
 }

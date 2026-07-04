@@ -1,26 +1,38 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { politicianRankings, politicians } from "./politicians.models";
-import { cities, cityRankings } from "./cities.models";
+import { politicianRatings, politicians } from "./politicians.models";
+import { cities, cityRatings } from "./cities.models";
 import { PaginationParams } from "../types";
 export * from './cities.models'
 export * from './politicians.models'
 
 export type Politician       = InferSelectModel<typeof politicians>;
 export type NewPolitician    = InferInsertModel<typeof politicians>;
-export type PoliticianRanking    = InferSelectModel<typeof politicianRankings>;
-export type NewPoliticianRanking = InferInsertModel<typeof politicianRankings>;
+export type PoliticianRating    = InferSelectModel<typeof politicianRatings>;
+export type NewPoliticianRating = InferInsertModel<typeof politicianRatings>;
  
 export type City          = InferSelectModel<typeof cities>;
 export type NewCity       = InferInsertModel<typeof cities>;
-export type CityRanking    = InferSelectModel<typeof cityRankings>;
-export type NewCityRanking = InferInsertModel<typeof cityRankings>;
+export type CityRating    = InferSelectModel<typeof cityRatings>;
+export type NewCityRating = InferInsertModel<typeof cityRatings>;
  
 
  
-export type Ranking = { year: number; ranking: number };
+export type Rating = { year: number; rating: number };
+
+export interface UpsertCityMetrics {
+  year: number;
+  rating: number;
+
+  permitsIssued?: number;
+  permitsPer1000Residents?: number;
+  housingStarts?: number;
+  homesCompleted?: number;
+  averagePermitDays?: number;
+  population?: number;
+}
  
-export type PoliticianWithRankings = Politician & { rankings: Ranking[] };
-export type CityWithRankings       = City       & { rankings: Ranking[] };
+export type PoliticianWithRatings = Politician & { ratings: Rating[] };
+export type CityWithRatings       = City       & { ratings: UpsertCityMetrics[] };
 
 //TODO: Move these to a separate file
 export interface CityFilters extends PaginationParams {

@@ -5,7 +5,7 @@ import { authMiddleware, requireAdmin } from '../middleware/cognitoAuth';
 import {
   createCitySchema,
   updateCitySchema,
-  upsertCityRankingSchema,
+  upsertCityRatingSchema,
 } from '../schemas/city.schema';
 import { validate } from '../middleware/typeValidators';
 
@@ -33,9 +33,9 @@ export function cityRoutes(controller: CityController): Router {
     controller.delete
   );
 
-  router.put('/:id/rankings',
-    authMiddleware, requireAdmin, validate(upsertCityRankingSchema),
-    controller.upsertRanking
+  router.put('/:id/ratings',
+    authMiddleware, requireAdmin, validate(upsertCityRatingSchema),
+    controller.upsertMetrics
   );
 
 

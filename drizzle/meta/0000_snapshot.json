@@ -1,11 +1,11 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "58b0f276-921f-4d51-be23-ed4d100c01e3",
+  "id": "a4ecf3a6-3891-496e-b035-7b0704b4972f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "politician_rankings": {
-      "name": "politician_rankings",
+    "politician_ratings": {
+      "name": "politician_ratings",
       "columns": {
         "id": {
           "name": "id",
@@ -28,8 +28,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "ranking": {
-          "name": "ranking",
+        "rating": {
+          "name": "rating",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -55,9 +55,9 @@
         }
       },
       "foreignKeys": {
-        "politician_rankings_politician_id_politicians_id_fk": {
-          "name": "politician_rankings_politician_id_politicians_id_fk",
-          "tableFrom": "politician_rankings",
+        "politician_ratings_politician_id_politicians_id_fk": {
+          "name": "politician_ratings_politician_id_politicians_id_fk",
+          "tableFrom": "politician_ratings",
           "tableTo": "politicians",
           "columnsFrom": [
             "politician_id"
@@ -180,6 +180,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "median_house_price": {
           "name": "median_house_price",
           "type": "real",
@@ -239,8 +246,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "city_rankings": {
-      "name": "city_rankings",
+    "city_ratings": {
+      "name": "city_ratings",
       "columns": {
         "id": {
           "name": "id",
@@ -263,11 +270,53 @@
           "notNull": true,
           "autoincrement": false
         },
-        "ranking": {
-          "name": "ranking",
+        "rating": {
+          "name": "rating",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "permits_issued": {
+          "name": "permits_issued",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "permits_per_1000_residents": {
+          "name": "permits_per_1000_residents",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "housing_starts": {
+          "name": "housing_starts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "average_permit_days": {
+          "name": "average_permit_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "homes_completed": {
+          "name": "homes_completed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "population": {
+          "name": "population",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "created_at": {
@@ -290,9 +339,9 @@
         }
       },
       "foreignKeys": {
-        "city_rankings_city_id_cities_id_fk": {
-          "name": "city_rankings_city_id_cities_id_fk",
-          "tableFrom": "city_rankings",
+        "city_ratings_city_id_cities_id_fk": {
+          "name": "city_ratings_city_id_cities_id_fk",
+          "tableFrom": "city_ratings",
           "tableTo": "cities",
           "columnsFrom": [
             "city_id"

@@ -16,11 +16,24 @@ export const createCitySchema = z.object({
 
 export const updateCitySchema = createCitySchema.partial();
 
-export const upsertCityRankingSchema = z.object({
-  year:    z.number().int().min(2000).max(new Date().getFullYear() + 1),
-  ranking: z.number().int().min(1).max(10),
+export const upsertCityRatingSchema = z.object({
+  year: z.number().int().min(2000).max(new Date().getFullYear() + 1),
+
+  rating: z.number().int().positive(),
+
+  permitsIssued: z.number().int().nonnegative().optional(),
+
+  permitsPer1000Residents: z.number().nonnegative().optional(),
+
+  housingStarts: z.number().int().nonnegative().optional(),
+
+  homesCompleted: z.number().int().nonnegative().optional(),
+
+  averagePermitDays: z.number().int().nonnegative().optional(),
+
+  population: z.number().int().positive().optional(),
 });
 
 export type CreateCityDto        = z.infer<typeof createCitySchema>;
 export type UpdateCityDto        = z.infer<typeof updateCitySchema>;
-export type UpsertCityRankingDto = z.infer<typeof upsertCityRankingSchema>;
+export type UpsertCityRatingDto = z.infer<typeof upsertCityRatingSchema>;

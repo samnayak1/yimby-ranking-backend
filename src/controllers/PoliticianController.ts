@@ -3,7 +3,7 @@ import { PoliticianService } from '../services/PoliticianService';
 import {
   CreatePoliticianDto,
   UpdatePoliticianDto,
-  UpsertPoliticianRankingDto,
+  UpsertPoliticianRatingDto,
 } from '../schemas/politician.schemas';
 import { PoliticianFilters } from '../models';
 
@@ -101,13 +101,13 @@ export class PoliticianController {
   };
   
 
-  upsertRanking = (req: Request<{ id: string }, {}, UpsertPoliticianRankingDto>, res: Response, next: NextFunction): void => {
+  upsertRating = (req: Request<{ id: string }, {}, UpsertPoliticianRatingDto>, res: Response, next: NextFunction): void => {
     try {
-      const { year, ranking } = req.body;
-      const data = this.service.upsertRanking(Number(req.params.id), year, ranking);
+      const { year, rating } = req.body;
+      const data = this.service.upsertRating(Number(req.params.id), year, rating);
       res.json({ data });
     } catch (err) { 
-      console.error('Error in upsertRanking:', err);
+      console.error('Error in upsertRating:', err);
       next(err); }
   };
 }

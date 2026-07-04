@@ -1,5 +1,5 @@
 import { IPoliticianRepo } from '../repos/interfaces/IPoliticianRepo';
-import { NewPolitician, PaginatedResponse, PoliticianFilters, PoliticianWithRankings } from '../models';
+import { NewPolitician, PaginatedResponse, PoliticianFilters, PoliticianWithRatings } from '../models';
 import {options} from './../config/config'
 import { createError } from '../utils/errorHelper';
 
@@ -11,11 +11,11 @@ export class PoliticianService {
   constructor(private readonly repo: IPoliticianRepo) {}
 
 
-  async getAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithRankings>> {
+  async getAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithRatings>> {
     return this.repo.findAll(filters);
   }
 
-  getById(id: number): PoliticianWithRankings {
+  getById(id: number): PoliticianWithRatings {
     const politician = this.repo.findById(id);
     if (!politician) {
       throw createError(404, 'Politician not found');
@@ -23,7 +23,7 @@ export class PoliticianService {
     return politician;
   }
 
-  create(data: NewPolitician): PoliticianWithRankings {
+  create(data: NewPolitician): PoliticianWithRatings {
     if (!data.name?.trim()) {
       throw createError(400, 'Name is required');
     }
@@ -36,7 +36,7 @@ export class PoliticianService {
     });
   }
 
-  update(id: number, data: Partial<NewPolitician>): PoliticianWithRankings {
+  update(id: number, data: Partial<NewPolitician>): PoliticianWithRatings {
     this.getById(id);
 
     this.validate(data);
@@ -49,18 +49,18 @@ export class PoliticianService {
     this.repo.delete(id);
   }
 
-  upsertRanking(id: number, year: number, ranking: number): PoliticianWithRankings {
+  upsertRating(id: number, year: number, rating: number): PoliticianWithRatings {
     this.getById(id);
 
     if (year < 2000 || year > new Date().getFullYear() + 1) {
       throw createError(400, 'Invalid year');
     }
 
-    if (ranking < 1 || ranking > 10) {
-      throw createError(400, 'Ranking must be between 1 and 10');
+    if (rating < 1 || rating > 10) {
+      throw createError(400, 'Rating must be between 1 and 10');
     }
 
-    return this.repo.upsertRanking(id, year, ranking)!;
+    return this.repo.upsertRating(id, year, rating)!;
   }
 
   async getDesignations(): Promise<string[]> {
