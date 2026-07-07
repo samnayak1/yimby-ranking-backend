@@ -49,3 +49,9 @@ db/database.sqlite-journal
 db/database.sqlite-wal
 db/database.sqlite-shm
 db/backups/
+
+
+venv/
+__pycache__/
+*.pyc
+*.pyo

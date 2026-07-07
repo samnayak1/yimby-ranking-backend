@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, count, eq, like, sql } from 'drizzle-orm';
 
 import { DbProvider, DrizzleDb } from './client';
 import { NewPolitician, PoliticianFilters, PoliticianWithRatings, Rating} from '../models';
@@ -15,89 +15,87 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
 
 
   async findAll(filters?: PoliticianFilters) {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'name',
-      sortOrder = 'asc',
-      search,
-      designation,
-      politicalLeaning,
-      nationalityCode,
-      isInOffice,
-    } = filters || {};
+  const {
+    page = 1,
+    limit = 20,
+    sortBy = "name",
+    sortOrder = "asc",
+    search,
+    designation,
+    politicalLeaning,
+    nationalityCode,
+    isInOffice,
+  } = filters || {};
 
-    const conditions = [];
+  const conditions = [];
 
-    if (search) {
-      conditions.push(
-        sql`(${politicians.name} LIKE ${`%${search}%`})`
-      );
-    }
-
-    if (designation) {
-      conditions.push(eq(politicians.designation, designation));
-    }
-
-    if (politicalLeaning) {
-      conditions.push(eq(politicians.politicalLeaning, politicalLeaning));
-    }
-
-    if (nationalityCode) {
-      conditions.push(eq(politicians.nationalityCode, nationalityCode));
-    }
-
-    if (isInOffice !== undefined) {
-      conditions.push(eq(politicians.isInOffice, isInOffice ? 1 : 0));
-    }
-
-   
-    const whereClause = conditions.length > 0 ? sql`${sql.join(conditions, sql` AND `)}` : sql`1=1`;
-
-    // Get total count
-    const totalResult = await this.db
-      .select({ count: sql<number>`count(*)` })
-      .from(politicians)
-      .where(whereClause);
-
-    const total = totalResult[0]?.count || 0;
-
-    // Get paginated data
-    const offset = (page - 1) * limit;
-    
-    const orderByColumn = sortBy === 'name' ? politicians.name :
-                          sortBy === 'designation' ? politicians.designation :
-                          sortBy === 'nationalityCode' ? politicians.nationalityCode :
-                          sortBy === 'politicalLeaning' ? politicians.politicalLeaning :
-                          politicians.name;
-
-    const orderByClause = sortOrder === 'desc' 
-      ? sql`${orderByColumn} DESC`
-      : sql`${orderByColumn} ASC`;
-
-    const rows = this.db
-      .select()
-      .from(politicians)
-      .leftJoin(politicianRatings, eq(politicianRatings.politicianId, politicians.id))
-      .where(whereClause)
-      .orderBy(orderByClause)
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    const data = this.groupRatings(rows);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      filters: filters || {},
-    };
+  if (search) {
+    conditions.push(like(politicians.name, `${search}%`));
   }
+
+  if (designation) {
+    conditions.push(eq(politicians.designation, designation));
+  }
+
+  if (politicalLeaning) {
+    conditions.push(eq(politicians.politicalLeaning, politicalLeaning));
+  }
+
+  if (nationalityCode) {
+    conditions.push(eq(politicians.nationalityCode, nationalityCode));
+  }
+
+  if (isInOffice !== undefined) {
+    conditions.push(eq(politicians.isInOffice, isInOffice ? 1 : 0));
+  }
+
+  const whereClause =
+    conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Total count
+  const [{ total }] = await this.db
+    .select({
+      total: count(),
+    })
+    .from(politicians)
+    .where(whereClause);
+
+  const offset = (page - 1) * limit;
+
+  const orderBy =
+    sortBy === "designation"
+      ? politicians.designation
+      : sortBy === "nationalityCode"
+      ? politicians.nationalityCode
+      : sortBy === "politicalLeaning"
+      ? politicians.politicalLeaning
+      : politicians.name;
+
+  const data = await this.db.query.politicians.findMany({
+    where: whereClause,
+    with: {
+      ratings: {
+        orderBy: (ratings, { desc }) => [desc(ratings.year)],
+      },
+    },
+    orderBy: sortOrder === "desc"
+      ? (politicians, { desc }) => [desc(orderBy)]
+      : (politicians, { asc }) => [asc(orderBy)],
+    limit,
+    offset,
+  });
+
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    filters: filters || {},
+  };
+}
 
   findById(id: number): PoliticianWithRatings | null {
     const rows = this.db

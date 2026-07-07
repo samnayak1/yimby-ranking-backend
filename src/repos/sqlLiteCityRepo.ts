@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, count, eq, gte, like, lte, or, sql } from 'drizzle-orm';
 import { CityFilters ,CityRating,CityWithRatings,NewCity, UpsertCityMetrics } from '../models';
 import { cities, cityRatings, } from '../models/cities.models';
 import { DbProvider, DrizzleDb } from './client';
@@ -14,93 +14,106 @@ export class SQLiteCityRepo implements ICityRepo{
   }
 
 
-  async findAll(filters?: CityFilters) {
-    const {
-      page = 1,
-      limit = 20,
-      sortBy = 'name',
-      sortOrder = 'asc',
-      search,
-      countryCode,
-      region,
-      minPrice,
-      maxPrice,
-    } = filters || {};
+ async findAll(filters?: CityFilters) {
+  const {
+    page = 1,
+    limit = 20,
+    sortBy = "name",
+    sortOrder = "asc",
+    search,
+    countryCode,
+    region,
+    minPrice,
+    maxPrice,
+  } = filters || {};
 
+  const conditions = [];
 
-    const conditions = [];
-
-    if (search) {
-     
-      conditions.push(
-        sql`(${cities.name} LIKE ${`%${search}%`} OR
-             ${cities.region} LIKE ${`%${search}%`})`
-      );
-    }
-
-    if (countryCode) {
-      conditions.push(eq(cities.countryCode, countryCode));
-    }
-
-    if (region) {
-      conditions.push(eq(cities.region, region));
-    }
-
-    if (minPrice !== undefined) {
-      conditions.push(sql`${cities.medianHousePrice} >= ${minPrice}`);
-    }
-
-    if (maxPrice !== undefined) {
-      conditions.push(sql`${cities.medianHousePrice} <= ${maxPrice}`);
-    }
-
-    // Get total count
-    const whereClause = conditions.length > 0 ? sql`${sql.join(conditions, sql` AND `)}` : sql`1=1`;
-    
-    const totalResult = await this.db
-      .select({ count: sql<number>`count(*)` })
-      .from(cities)
-      .where(whereClause);
-
-    const total = totalResult[0]?.count || 0;
-
-    const offset = (page - 1) * limit;
-    
-
-    const orderByColumn = sortBy === 'name' ? cities.name :
-                          sortBy === 'countryCode' ? cities.countryCode :
-                          sortBy === 'region' ? cities.region :
-                          sortBy === 'medianHousePrice' ? cities.medianHousePrice :
-                          cities.name;
-
-    const orderByClause = sortOrder === 'desc' 
-      ? sql`${orderByColumn} DESC`
-      : sql`${orderByColumn} ASC`;
-
-    const rows = this.db
-      .select()
-      .from(cities)
-      .leftJoin(cityRatings, eq(cityRatings.cityId, cities.id))
-      .where(whereClause)
-      .orderBy(orderByClause)
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    const data = this.groupRating(rows);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      filters: filters || {},
-    };
+  if (search) {
+    conditions.push(
+      or(
+        like(cities.name, `${search}%`),
+        like(cities.region, `${search}%`)
+      )
+    );
   }
 
+  if (countryCode) {
+    conditions.push(eq(cities.countryCode, countryCode));
+  }
+
+  if (region) {
+    conditions.push(eq(cities.region, region));
+  }
+
+  if (minPrice !== undefined) {
+    conditions.push(gte(cities.medianHousePrice, minPrice));
+  }
+
+  if (maxPrice !== undefined) {
+    conditions.push(lte(cities.medianHousePrice, maxPrice));
+  }
+
+  const whereClause =
+    conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [{ total }] = await this.db
+    .select({
+      total: count(),
+    })
+    .from(cities)
+    .where(whereClause);
+
+  const offset = (page - 1) * limit;
+
+  const orderColumn =
+    sortBy === "countryCode"
+      ? cities.countryCode
+      : sortBy === "region"
+      ? cities.region
+      : sortBy === "medianHousePrice"
+      ? cities.medianHousePrice
+      : cities.name;
+
+  const citiesResult = await this.db.query.cities.findMany({
+    where: whereClause,
+    with: {
+      ratings: {
+        orderBy: (ratings, { desc }) => [desc(ratings.year)],
+      },
+    },
+    orderBy:
+      sortOrder === "desc"
+        ? (_, { desc }) => [desc(orderColumn)]
+        : (_, { asc }) => [asc(orderColumn)],
+    limit,
+    offset,
+  });
+
+  const data = citiesResult.map(city => ({
+  ...city,
+  ratings: city.ratings.map(r => ({
+    ...r,
+    permitsIssued: r.permitsIssued ?? undefined,
+    permitsPer1000Residents: r.permitsPer1000Residents ?? undefined,
+    housingStarts: r.housingStarts ?? undefined,
+    averagePermitDays: r.averagePermitDays ?? undefined,
+    homesCompleted: r.homesCompleted ?? undefined,
+    population: r.population ?? undefined,
+  })),
+}));
+
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    filters: filters || {},
+  };
+}
 
 
 

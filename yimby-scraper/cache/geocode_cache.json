@@ -1,0 +1,110 @@
+{
+  "atlanta|united states": {
+    "lat": 33.7544657,
+    "lng": -84.3898151
+  },
+  "austin|united states": {
+    "lat": 30.2711286,
+    "lng": -97.7436995
+  },
+  "berkeley|united states": {
+    "lat": 37.8708393,
+    "lng": -122.272863
+  },
+  "boston|united states": {
+    "lat": 42.3588336,
+    "lng": -71.0578303
+  },
+  "brooklyn|united states": {
+    "lat": 40.6526006,
+    "lng": -73.9497211
+  },
+  "burbank|united states": {
+    "lat": 34.1812089,
+    "lng": -118.307201
+  },
+  "california|united states": {
+    "lat": 36.7014631,
+    "lng": -118.755997
+  },
+  "chicago|united states": {
+    "lat": 41.8755616,
+    "lng": -87.6244212
+  },
+  "clemson|united states": {
+    "lat": 34.6850749,
+    "lng": -82.8364111
+  },
+  "florida|united states": {
+    "lat": 27.7567667,
+    "lng": -81.4639835
+  },
+  "jersey city|united states": {
+    "lat": 40.7215682,
+    "lng": -74.047455
+  },
+  "london|united kingdom": {
+    "lat": 51.5074456,
+    "lng": -0.1277653
+  },
+  "los angeles|united states": {
+    "lat": 34.0536909,
+    "lng": -118.242766
+  },
+  "marblehead|united states": {
+    "lat": 42.500096,
+    "lng": -70.8578253
+  },
+  "montgomery county|united states": {
+    "lat": 30.301949,
+    "lng": -95.5065944
+  },
+  "new york city|united states": {
+    "lat": 40.7127281,
+    "lng": -74.0060152
+  },
+  "new york|united states": {
+    "lat": 40.7127281,
+    "lng": -74.0060152
+  },
+  "orange county|united states": {
+    "lat": 33.750631,
+    "lng": -117.8722311
+  },
+  "pasadena|united states": {
+    "lat": 34.1476507,
+    "lng": -118.144155
+  },
+  "philadelphia|united states": {
+    "lat": 39.9527237,
+    "lng": -75.1635262
+  },
+  "portland|united states": {
+    "lat": 45.5202471,
+    "lng": -122.674194
+  },
+  "queens|united states": {
+    "lat": 40.7135078,
+    "lng": -73.8283132
+  },
+  "sacramento|united states": {
+    "lat": 38.5810606,
+    "lng": -121.493895
+  },
+  "san diego|united states": {
+    "lat": 32.7174202,
+    "lng": -117.162772
+  },
+  "san francisco|united states": {
+    "lat": 37.7879363,
+    "lng": -122.4075201
+  },
+  "seattle|united states": {
+    "lat": 47.6038321,
+    "lng": -122.330062
+  },
+  "vancouver|canada": {
+    "lat": 49.2608724,
+    "lng": -123.113952
+  }
+}
