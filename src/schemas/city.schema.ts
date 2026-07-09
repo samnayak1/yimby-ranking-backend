@@ -34,6 +34,31 @@ export const upsertCityRatingSchema = z.object({
   population: z.number().int().positive().optional(),
 });
 
+export const getCitiesQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+
+  sortBy: z.enum([
+    "name",
+    "countryCode",
+    "region",
+    "medianHousePrice",
+  ]).default("name"),
+
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+
+  search: z.string().trim().optional(),
+  countryCode: z.string().length(2).optional(),
+  region: z.string().optional(),
+
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+
+  minScore: z.coerce.number().min(1).max(10).optional(),
+  maxScore: z.coerce.number().min(1).max(10).optional(),
+});
+
 export type CreateCityDto        = z.infer<typeof createCitySchema>;
 export type UpdateCityDto        = z.infer<typeof updateCitySchema>;
 export type UpsertCityRatingDto = z.infer<typeof upsertCityRatingSchema>;
+export type GetCitiesQuery = z.infer<typeof getCitiesQuerySchema>;

@@ -13,12 +13,17 @@ import asyncio
 from typing import Optional, List, Dict
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from typing import Optional, Dict
+
+from pydantic import BaseModel, Field
+
 from config import llm, YEARS_BACK
 import datetime
 
 CURRENT_YEAR = datetime.date.today().year
 
 # ── Helpers ───────────────────────────────────────────────────
+
 
 def _parse_json(text: str) -> Optional[dict | list]:
     text = re.sub(r"```json|```", "", text).strip()
@@ -81,13 +86,14 @@ async def discover_all_entities(chunks: List[str]) -> Dict[str, List[str]]:
     results = await asyncio.gather(*[_discover(c) for c in chunks])
 
     # Merge and deduplicate across chunks
-    all_cities      = set()
+    all_cities = set()
     all_politicians = set()
     for r in results:
         all_cities.update(r.get("cities", []))
         all_politicians.update(r.get("politicians", []))
 
-    print(f"\nDiscovered {len(all_cities)} cities, {len(all_politicians)} politicians.")
+    print(
+        f"\nDiscovered {len(all_cities)} cities, {len(all_politicians)} politicians.")
     print(f"  Cities:     {sorted(all_cities)}")
     print(f"  Politicians: {sorted(all_politicians)}")
 
@@ -162,7 +168,7 @@ Do not use generic political language such as
 or
 "critics argue".
 Instead explain *why* commenters believe those things.
-Only include opinions supported by the provided posts.
+Talk as if it's your own opinion, but only include opinions supported by the provided posts.
 Return ONLY valid JSON. No markdown. No explanation.
 """
 
@@ -186,10 +192,127 @@ async def extract_politician(name: str, reddit_text: str) -> Optional[dict]:
         return None
     response = await llm.ainvoke([
         SystemMessage(content=POLITICIAN_SYSTEM),
-        HumanMessage(content=f"Politician: {name}\n\nPosts:\n{reddit_text[:6000]}"),
+        HumanMessage(
+            content=f"Politician: {name}\n\nPosts:\n{reddit_text[:6000]}"),
     ])
     result = _parse_json(response.content)
     if isinstance(result, dict):
         result["_entity_name"] = name
         return result
     return None
+
+
+class HousingStats(BaseModel):
+    year: int
+
+    population: int | None = None
+
+    medianHousePrice: int | None = None
+    currency: str | None = None
+
+    permitsIssued: int | None = None
+    permitsPer1000Residents: float | None = None
+
+    housingStarts: int | None = None
+    homesCompleted: int | None = None
+
+    averagePermitDays: int | None = None
+
+    confidence: int = Field(
+        description="0-100 confidence in these estimates"
+    )
+
+
+async def infer_housing_stats(
+    city: str,
+    country: str,
+    years: list[int],
+) -> list[dict]:
+
+    prompt = f"""
+Estimate the housing and development statistics for the following city.
+
+City: {city}
+Country: {country}
+
+Years:
+{", ".join(map(str, years))}
+
+Return one object for each year.
+
+Guidelines:
+- Use your general knowledge of the city's housing market, demographics, and construction trends.
+- Estimates are acceptable; exact official values are NOT required.
+- Keep values internally consistent from year to year.
+- Population should generally change gradually unless there was a major event.
+- Median house prices should reflect known housing market trends.
+- Housing starts, permits, and completions should be plausible relative to the city's size.
+- Permits issued should usually be greater than or equal to homes completed.
+- Average permit days should reflect how restrictive or efficient the city's permitting process is.
+- Use local currency for medianHousePrice.
+- If a statistic is genuinely impossible to estimate, return null instead of inventing an obviously unrealistic value.
+- Prefer realistic estimates over precision.
+- Return data for every requested year.
+
+For each year estimate:
+- population
+- medianHousePrice
+- currency
+- permitsIssued
+- permitsPer1000Residents
+- housingStarts
+- homesCompleted
+- averagePermitDays
+"""
+
+    try:
+        structured = llm.with_structured_output(list[HousingStats])
+
+        results = await structured.ainvoke(prompt)
+
+        return [r.model_dump() for r in results]
+
+    except Exception:
+        return []
+
+
+class Coordinates(BaseModel):
+    lat: float = Field(description="Latitude in decimal degrees")
+    lng: float = Field(description="Longitude in decimal degrees")
+
+
+async def infer_coordinates(
+    city: str,
+    country: str = "",
+) -> Optional[Dict[str, float]]:
+    """Ask the LLM for the coordinates of a city.
+
+    Returns None if the LLM is unsure.
+    """
+
+    prompt = f"""
+Provide the approximate geographic coordinates for this city.
+
+City: {city}
+Country: {country}
+
+Rules:
+- Return ONLY if you are confident.
+- If the city is ambiguous or you are unsure, return null.
+- Use decimal degrees.
+"""
+
+    try:
+        structured = llm.with_structured_output(Coordinates)
+        result = await structured.ainvoke(prompt)
+
+        if result is None:
+            return None
+
+        return {
+            "lat": result.lat,
+            "lng": result.lng,
+        }
+
+    except Exception:
+        return None

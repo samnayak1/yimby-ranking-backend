@@ -4,17 +4,22 @@ import { authMiddleware, requireAdmin } from '../middleware/cognitoAuth';
 
 import {
   createCitySchema,
+  getCitiesQuerySchema,
   updateCitySchema,
   upsertCityRatingSchema,
 } from '../schemas/city.schema';
-import { validate } from '../middleware/typeValidators';
+import { validate, validateQuery } from '../middleware/typeValidators';
 
 export function cityRoutes(controller: CityController): Router {
   const router = Router();
 
  router.get('/filter/filter-options', controller.getFilterOptions);
-  // Public
-  router.get('/',    controller.getAll);
+
+  router.get(
+  "/",
+  validateQuery(getCitiesQuerySchema),
+  controller.getAll,
+);
   router.get('/:id', controller.getById);
 
   // Admin only

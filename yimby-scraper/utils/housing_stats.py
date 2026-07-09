@@ -6,8 +6,10 @@ EU:   Eurostat (permits, population) — city-level data is limited so we do bes
 """
 import asyncio
 import httpx
-from typing import Optional, List, Dict
+from typing import List, Dict
 import datetime
+from extractors.llm_extractor import infer_housing_stats
+
 
 CURRENT_YEAR = datetime.date.today().year
 
@@ -137,8 +139,27 @@ async def fetch_eu_housing_stats(city: str, years: List[int]) -> List[Dict]:
     return results
 
 
-async def fetch_housing_stats(city: str, country_code: str, years: List[int]) -> List[Dict]:
+async def fetch_housing_stats(
+    city: str,
+    country_code: str,
+    years: list[int],
+) -> list[dict]:
+
+    stats = await infer_housing_stats(
+        city,
+        country_code,
+        years,
+    )
+
+
+
+    if stats:
+        print(f"  [housing] {city} ({country_code}) → {len(stats)} years of stats inferred")
+        return stats
+
+    print(f"  [housing] {city} ({country_code}) → no stats inferred, falling back to API fetch")
+
     if country_code == "US":
         return await fetch_us_housing_stats(city, years)
-    else:
-        return await fetch_eu_housing_stats(city, years)
+
+    return await fetch_eu_housing_stats(city, years)

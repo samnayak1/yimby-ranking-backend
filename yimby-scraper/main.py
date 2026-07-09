@@ -14,7 +14,7 @@ from tqdm.asyncio import tqdm
 
 from config import YEARS_BACK
 from scrapers.reddit import fetch_posts, chunk_posts, bundle_for_entity
-from extractors.llm_extractor import discover_all_entities, extract_city, extract_politician
+from extractors.llm_extractor import discover_all_entities, extract_city, extract_politician, infer_coordinates
 from utils.geocoder import geocode
 from utils.housing_stats import fetch_housing_stats
 from db.writer import write_city, write_politician
@@ -35,9 +35,18 @@ async def process_city(name: str, posts) -> bool:
         print(f"  [city] Extraction failed for {name}")
         return False
 
-    # Geocode if missing
     if not data.get("lat") or not data.get("lng"):
-        coords = await geocode(data.get("name", name), data.get("country", ""))
+        coords = await infer_coordinates(
+            data.get("name", name),
+            data.get("country", ""),
+        )
+
+        if not coords:
+            coords = await geocode(
+                data.get("name", name),
+                data.get("country", ""),
+            )
+
         if coords:
             data.update(coords)
 

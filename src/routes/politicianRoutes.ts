@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { PoliticianController } from '../controllers/PoliticianController';
 import { authMiddleware, requireAdmin } from '../middleware/cognitoAuth';
-import { validate } from '../middleware/typeValidators';
-import { createPoliticianSchema, updatePoliticianSchema, upsertPoliticianRatingSchema } from '../schemas/politician.schemas';
+import { validate, validateQuery } from '../middleware/typeValidators';
+import { createPoliticianSchema, getPoliticiansQuerySchema, updatePoliticianSchema, upsertPoliticianRatingSchema } from '../schemas/politician.schemas';
 
 
 
@@ -10,7 +10,7 @@ export function politicianRoutes(controller: PoliticianController): Router {
   const router = Router();
   router.get('/filter/filter-options', controller.getFilterOptions);
   // Public
-  router.get('/', controller.getAll);
+  router.get('/', validateQuery(getPoliticiansQuerySchema), controller.getAll);
   router.get('/:id', controller.getById);
 
   // Admin only

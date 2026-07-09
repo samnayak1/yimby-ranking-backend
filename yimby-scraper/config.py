@@ -31,8 +31,8 @@ llm = ChatOpenAI(
 
 # ── Scraping limits ───────────────────────────────────────────
 MAX_POSTS      = 500   # posts to scan from r/yimby
-MAX_COMMENTS   = 40    # comments per post to include in summary
-YEARS_BACK     = 5     # years of rating history to generate
+MAX_COMMENTS   = 30    # comments per post to include in summary
+YEARS_BACK     = 2     # years of rating history to generate
 
 # ── Supported regions ─────────────────────────────────────────
 EU_COUNTRIES = {

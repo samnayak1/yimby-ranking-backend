@@ -23,6 +23,36 @@ export const upsertPoliticianRatingSchema = z.object({
   rating: z.number().int().min(1).max(10),
 });
 
+export const getPoliticiansQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+
+  sortBy: z.enum([
+    "name",
+    "designation",
+    "nationalityCode",
+    "politicalLeaning",
+  ]).default("name"),
+
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+
+  search: z.string().trim().optional(),
+  designation: z.string().optional(),
+  politicalLeaning: z.string().optional(),
+  nationalityCode: z.string().length(2).optional(),
+
+  isInOffice: z
+    .enum(["true", "false"])
+    .transform(v => v === "true")
+    .optional(),
+
+  minScore: z.coerce.number().min(1).max(10).optional(),
+  maxScore: z.coerce.number().min(1).max(10).optional(),
+
+  cityId: z.coerce.number().int().positive().optional(),
+});
+
 export type CreatePoliticianDto        = z.infer<typeof createPoliticianSchema>;
 export type UpdatePoliticianDto        = z.infer<typeof updatePoliticianSchema>;
 export type UpsertPoliticianRatingDto = z.infer<typeof upsertPoliticianRatingSchema>;
+export type GetPoliticiansQuery = z.infer<typeof getPoliticiansQuerySchema>;
