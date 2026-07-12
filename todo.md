@@ -27,7 +27,7 @@ Zoning reforms (e.g. "Single-family zoning abolished")
 Transit expansions (new metro/BRT/light rail lines)
 Sources (links to annual housing reports or city dashboards)
 18. RBAC on db
-
+19. Store data in source instead of relying on llm memory
 
 
 
@@ -39,7 +39,6 @@ Bugs
 ~3. Filter country does not work~
 ~4. Sort should not only sort the first page but all pages~
 5. Parser could get the pop
-6. Pagination from offset to pointer
 ~7. Show nationality in table~
 ~8. delete ~
 
