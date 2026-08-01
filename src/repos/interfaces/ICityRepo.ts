@@ -1,6 +1,8 @@
 import { CityFilters, CityWithRatings, NewCity, PaginatedResponse, UpsertCityMetrics } from "../../models";
+import { CityMapPoint } from "../../types";
 
 export interface ICityRepo {
+  findMapData(): CityMapPoint[];
   findAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRatings>>;
   findById(id: number): CityWithRatings | null;
   create(data: NewCity): CityWithRatings;

@@ -23,7 +23,8 @@ async def upsert_city(db: aiosqlite.Connection, city: Dict) -> Optional[int]:
             currency,
             notes,
             lat,
-            lng
+            lng,
+            rating
         )
         VALUES (
             :name,
@@ -33,7 +34,8 @@ async def upsert_city(db: aiosqlite.Connection, city: Dict) -> Optional[int]:
             :currency,
             :notes,
             :lat,
-            :lng
+            :lng,
+            :rating
         )
         ON CONFLICT(name, country_code) DO UPDATE SET
             region = excluded.region,
@@ -42,6 +44,7 @@ async def upsert_city(db: aiosqlite.Connection, city: Dict) -> Optional[int]:
             notes = COALESCE(excluded.notes, cities.notes),
             lat = COALESCE(excluded.lat, cities.lat),
             lng = COALESCE(excluded.lng, cities.lng),
+            rating = COALESCE(excluded.rating, cities.rating)
             updated_at = datetime('now')
         RETURNING id
         """,
@@ -54,6 +57,7 @@ async def upsert_city(db: aiosqlite.Connection, city: Dict) -> Optional[int]:
             "notes": city.get("notes"),
             "lat": city.get("lat"),
             "lng": city.get("lng"),
+            "rating": city.get("rating")
         },
     )
 
@@ -109,7 +113,8 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
         is_in_office,
         nationality_code,
         political_leaning,
-        notes
+        notes,
+        rating
     )
     VALUES (
         :name,
@@ -117,7 +122,8 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
         :isInOffice,
         :nationalityCode,
         :politicalLeaning,
-        :notes
+        :notes,
+        :rating
     )
     ON CONFLICT(name) DO UPDATE SET
         designation = COALESCE(excluded.designation, designation),
@@ -125,6 +131,7 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
         nationality_code = COALESCE(excluded.nationality_code, nationality_code),
         political_leaning = COALESCE(excluded.political_leaning, political_leaning),
         notes = COALESCE(excluded.notes, notes),
+        rating = COALESCE(excluded.rating, rating)
         updated_at = datetime('now')
     RETURNING id
     """,
@@ -135,6 +142,7 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
         "nationalityCode": pol.get("nationalityCode"),
         "politicalLeaning": pol.get("politicalLeaning"),
         "notes": pol.get("notes"),
+        "rating": pol.get("rating")
     },
 )
     row = await cursor.fetchone()
@@ -165,7 +173,7 @@ async def upsert_politician_rating(
     )
 
 
-async def write_city(city_data: Dict, stats: List[Dict] = []):
+async def write_city(city_data: Dict):
     async with aiosqlite.connect(DB_PATH) as db:
         city_id = await upsert_city(db, city_data)
         if city_id:

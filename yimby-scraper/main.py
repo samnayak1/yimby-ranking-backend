@@ -30,7 +30,7 @@ CURRENT_YEAR = datetime.date.today().year
 TARGET_YEARS = list(range(CURRENT_YEAR - YEARS_BACK, CURRENT_YEAR + 1))
 WRITE_TO_DB  = True
 
-# ── Intermediate data paths ───────────────────────────────────
+
 
 DATA         = Path("data")
 RAW          = DATA / "raw"
@@ -71,7 +71,7 @@ def _dicts_to_posts(dicts: list[dict]) -> list[Post]:
     return [Post(**d) for d in dicts]
 
 
-# ── Stage 1: Scrape ───────────────────────────────────────────
+
 
 async def stage_scrape() -> tuple[list[Post], dict]:
     """Fetch posts, run discovery, save everything to disk."""
@@ -87,7 +87,7 @@ async def stage_scrape() -> tuple[list[Post], dict]:
         _write(rp, _posts_to_dicts(posts))
         print(f"Saved {len(posts)} raw posts → {rp}")
 
-    # Discovery (or reuse today's if already discovered)
+
     dp = discovered_path()
     if dp.exists():
         print(f"Loading existing discovered entities from {dp}...")
@@ -99,7 +99,7 @@ async def stage_scrape() -> tuple[list[Post], dict]:
         _write(dp, entities)
         print(f"Saved discovered entities → {dp}")
 
-    # Bundle posts per entity
+
     print("\nBundling posts per entity...")
     for name in entities.get("cities", []):
         text = bundle_for_entity(posts, name)
@@ -113,7 +113,7 @@ async def stage_scrape() -> tuple[list[Post], dict]:
             _write(bundle_path("politician", name),
                    {"entity_type": "politician", "name": name, "text": text})
 
-    print(f"\n✓ Stage 1 done — {len(entities.get('cities',[]))} cities, "
+    print(f"\nSAVED Stage 1 done — {len(entities.get('cities',[]))} cities, "
           f"{len(entities.get('politicians',[]))} politicians discovered.")
     return posts, entities
 
@@ -167,11 +167,11 @@ async def process_city(name: str, posts: list[Post], reextract: bool = False) ->
             _write(ext, data)
 
     if WRITE_TO_DB:
-        city_id = await write_city(data, stats)
-        print(f"  [city] ✓ {name} → DB id={city_id}")
+        city_id = await write_city(data)
+        print(f"  [city] SAVED {name} → DB id={city_id}")
     else:
         save_json("city", name, {"city": data, "stats": stats})
-        print(f"  [city] ✓ {name} → saved to file")
+        print(f"  [city] SAVED {name} → saved to file")
 
     return True
 
@@ -202,10 +202,10 @@ async def process_politician(name: str, posts: list[Post], reextract: bool = Fal
 
     if WRITE_TO_DB:
         pol_id = await write_politician(data)
-        print(f"  [politician] ✓ {name} → DB id={pol_id}")
+        print(f"  [politician] SAVED {name} → DB id={pol_id}")
     else:
         save_json("politician", name, data)
-        print(f"  [politician] ✓ {name} → saved to file")
+        print(f"  [politician] SAVED {name} → saved to file")
 
     return True
 

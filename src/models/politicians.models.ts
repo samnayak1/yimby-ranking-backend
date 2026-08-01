@@ -11,6 +11,7 @@ export const politicians = sqliteTable(
     nationalityCode: text("nationality_code").notNull(),
     politicalLeaning: text("political_leaning"),
     notes: text("notes"),
+    rating: integer("rating"),
     createdAt: text("created_at").default(sql`(datetime('now'))`),
     updatedAt: text("updated_at").default(sql`(datetime('now'))`),
   },

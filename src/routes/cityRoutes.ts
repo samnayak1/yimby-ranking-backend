@@ -14,12 +14,13 @@ export function cityRoutes(controller: CityController): Router {
   const router = Router();
 
  router.get('/filter/filter-options', controller.getFilterOptions);
-
+  router.get('/map', controller.getMapData);
   router.get(
   "/",
   validateQuery(getCitiesQuerySchema),
   controller.getAll,
 );
+
   router.get('/:id', controller.getById);
 
   // Admin only
@@ -42,6 +43,7 @@ export function cityRoutes(controller: CityController): Router {
     authMiddleware, requireAdmin, validate(upsertCityRatingSchema),
     controller.upsertMetrics
   );
+
 
 
 

@@ -12,6 +12,7 @@ export const createPoliticianSchema = z.object({
   designation:      z.enum(DESIGNATIONS).optional(),
   isInOffice:       z.number().int().min(0).max(1).default(1),
   nationalityCode:      z.string().trim(),
+  rating :              z.number().min(0).max(10),
   politicalLeaning: z.enum(LEANINGS).optional(),
   notes:            z.string().trim().optional(),
 });
@@ -20,19 +21,19 @@ export const updatePoliticianSchema = createPoliticianSchema.partial();
 
 export const upsertPoliticianRatingSchema = z.object({
   year:    z.number().int().min(2000).max(new Date().getFullYear() + 1),
-  rating: z.number().int().min(1).max(10),
+  rating: z.number().min(1).max(10),
 });
 
 export const getPoliticiansQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-
-  sortBy: z.enum([
-    "name",
-    "designation",
-    "nationalityCode",
-    "politicalLeaning",
-  ]).default("name"),
+sortBy: z.enum([
+  "name",
+  "designation",
+  "politicalLeaning",
+  "nationalityCode",
+  "rating",
+]).default("name"),
 
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
 

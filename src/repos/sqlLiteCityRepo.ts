@@ -1,8 +1,9 @@
-import { and, count, eq, gte, like, lte, or, sql } from 'drizzle-orm';
+import { and, count, eq, gte, isNotNull, like, lte, or, sql } from 'drizzle-orm';
 import { CityFilters ,CityRating,CityWithRatings,NewCity, UpsertCityMetrics } from '../models';
 import { cities, cityRatings, } from '../models/cities.models';
 import { DbProvider, DrizzleDb } from './client';
 import { ICityRepo } from './interfaces/ICityRepo';
+import { CityMapPoint } from '../types';
 
 
 
@@ -25,6 +26,8 @@ export class SQLiteCityRepo implements ICityRepo{
     region,
     minPrice,
     maxPrice,
+    minScore,
+    maxScore
   } = filters || {};
 
   const conditions = [];
@@ -53,6 +56,13 @@ export class SQLiteCityRepo implements ICityRepo{
   if (maxPrice !== undefined) {
     conditions.push(lte(cities.medianHousePrice, maxPrice));
   }
+  if (minScore !== undefined) {
+  conditions.push(gte(cities.rating, minScore));
+}
+
+if (maxScore !== undefined) {
+  conditions.push(lte(cities.rating, maxScore));
+}
 
   const whereClause =
     conditions.length > 0 ? and(...conditions) : undefined;
@@ -67,13 +77,15 @@ export class SQLiteCityRepo implements ICityRepo{
   const offset = (page - 1) * limit;
 
   const orderColumn =
-    sortBy === "countryCode"
-      ? cities.countryCode
-      : sortBy === "region"
-      ? cities.region
-      : sortBy === "medianHousePrice"
-      ? cities.medianHousePrice
-      : cities.name;
+  sortBy === "countryCode"
+    ? cities.countryCode
+    : sortBy === "region"
+    ? cities.region
+    : sortBy === "medianHousePrice"
+    ? cities.medianHousePrice
+    : sortBy === "rating"
+    ? cities.rating
+    : cities.name;
 
   const citiesResult = await this.db.query.cities.findMany({
     where: whereClause,
@@ -116,7 +128,24 @@ export class SQLiteCityRepo implements ICityRepo{
 }
 
 
-
+findMapData(): CityMapPoint[] {
+  return this.db
+    .select({
+      id:      cities.id,
+      name:    cities.name,
+      country: cities.countryCode,
+      region:  cities.region,
+      lat:     cities.lat,
+      lng:     cities.lng,
+      rating:  cities.rating,
+      medianHousePrice: cities.medianHousePrice,
+      currency: cities.currency,
+      notes:   cities.notes,
+    })
+    .from(cities)
+    .where(and(isNotNull(cities.lat), isNotNull(cities.lng)))
+    .all();
+}
 
 
 

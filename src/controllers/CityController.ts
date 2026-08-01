@@ -49,6 +49,13 @@ export class CityController {
     }
   };
 
+  getMapData = (_req: Request, res: Response, next: NextFunction): void => {
+  try {
+    const data = this.service.getMapData();
+    res.json({ data });
+  } catch (err) { next(err); }
+};
+
   getById = (req: Request<{ id: string }>, res: Response, next: NextFunction): void => {
     try {
       const data = this.service.getById(Number(req.params.id));

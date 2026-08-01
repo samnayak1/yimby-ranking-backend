@@ -1,6 +1,7 @@
 import { ICityRepo } from '../repos/interfaces/ICityRepo';
 import { NewCity, CityFilters, PaginatedResponse, UpsertCityMetrics, CityWithRatings } from '../models/index';
 import { createError } from '../utils/errorHelper';
+import { CityMapPoint } from '../types';
 
 export class CityService {
   constructor(private readonly repo: ICityRepo) { }
@@ -14,6 +15,9 @@ export class CityService {
     if (!city) throw Object.assign(new Error('City not found'), { status: 404 });
     return city;
   }
+  getMapData(): CityMapPoint[] {
+  return this.repo.findMapData();
+}
 
   create(data: NewCity): CityWithRatings {
 

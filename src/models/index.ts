@@ -43,6 +43,7 @@ export interface CityFilters extends PaginationParams {
   maxPrice?: number;
   minScore?: number;
   maxScore?: number;
+  
 }
 
 

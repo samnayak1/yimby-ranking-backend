@@ -1,5 +1,5 @@
 """
-Two-pass LLM pipeline using DeepSeek:
+Two-pass LLM pipeline:
 
 Pass 1 — Discovery:
     Feed chunks of posts → LLM returns a list of cities and politicians mentioned.
@@ -116,6 +116,7 @@ Extract a structured JSON object with these exact fields:
   "region": "state or province e.g. California, Bavaria",
   "countryCode": "ISO 2-letter code e.g. US, DE, FR, GB",
   "notes": "2-3 sentence summary of this city's housing policy stance",
+  "rating": "1-10 based on the rating scale",
   "ratings": [
     {{"year": {CURRENT_YEAR}, "rating": 7}},
     {{"year": {CURRENT_YEAR - 1}, "rating": 6}},
@@ -143,6 +144,7 @@ Extract a structured JSON object with these exact fields:
   "nationalityCode": "ISO 2-letter country code e.g. US, DE, GB",
   "politicalLeaning": "one of: Liberal, Conservative, Democratic Socialist, Libertarian, Nationalist, Green",
   "notes": "2-3 sentence summary of their housing policy record",
+  "rating": "1-10 based on the rating scale",
   "ratings": [
     {{"year": {CURRENT_YEAR}, "rating": 8}},
     {{"year": {CURRENT_YEAR - 1}, "rating": 7}},

@@ -1,0 +1,1 @@
+ALTER TABLE `politicians` ADD `rating` integer;

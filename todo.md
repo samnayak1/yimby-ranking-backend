@@ -28,6 +28,7 @@ Transit expansions (new metro/BRT/light rail lines)
 Sources (links to annual housing reports or city dashboards)
 18. RBAC on db
 19. Store data in source instead of relying on llm memory
+20. Before after pictures
 
 
 

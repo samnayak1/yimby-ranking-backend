@@ -1,4 +1,4 @@
-import { and, count, eq, like, sql } from 'drizzle-orm';
+import { and, count, eq, gte, like, lte, sql } from 'drizzle-orm';
 
 import { DbProvider, DrizzleDb } from './client';
 import { NewPolitician, PoliticianFilters, PoliticianWithRatings, Rating} from '../models';
@@ -15,17 +15,19 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
 
 
   async findAll(filters?: PoliticianFilters) {
-  const {
-    page = 1,
-    limit = 20,
-    sortBy = "name",
-    sortOrder = "asc",
-    search,
-    designation,
-    politicalLeaning,
-    nationalityCode,
-    isInOffice,
-  } = filters || {};
+ const {
+  page = 1,
+  limit = 20,
+  sortBy = "name",
+  sortOrder = "asc",
+  search,
+  designation,
+  politicalLeaning,
+  nationalityCode,
+  isInOffice,
+  minScore,
+  maxScore,
+} = filters || {};
 
   const conditions = [];
 
@@ -49,6 +51,14 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     conditions.push(eq(politicians.isInOffice, isInOffice ? 1 : 0));
   }
 
+  if (minScore !== undefined) {
+  conditions.push(gte(politicians.rating, minScore));
+}
+
+if (maxScore !== undefined) {
+  conditions.push(lte(politicians.rating, maxScore));
+}
+
   const whereClause =
     conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -62,28 +72,31 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
 
   const offset = (page - 1) * limit;
 
-  const orderBy =
-    sortBy === "designation"
-      ? politicians.designation
-      : sortBy === "nationalityCode"
-      ? politicians.nationalityCode
-      : sortBy === "politicalLeaning"
-      ? politicians.politicalLeaning
-      : politicians.name;
+ const orderColumn =
+  sortBy === "designation"
+    ? politicians.designation
+    : sortBy === "nationalityCode"
+    ? politicians.nationalityCode
+    : sortBy === "politicalLeaning"
+    ? politicians.politicalLeaning
+    : sortBy === "rating"
+    ? politicians.rating
+    : politicians.name;
 
-  const data = await this.db.query.politicians.findMany({
-    where: whereClause,
-    with: {
-      ratings: {
-        orderBy: (ratings, { desc }) => [desc(ratings.year)],
-      },
+ const data = await this.db.query.politicians.findMany({
+  where: whereClause,
+  with: {
+    ratings: {
+      orderBy: (ratings, { desc }) => [desc(ratings.year)],
     },
-    orderBy: sortOrder === "desc"
-      ? (politicians, { desc }) => [desc(orderBy)]
-      : (politicians, { asc }) => [asc(orderBy)],
-    limit,
-    offset,
-  });
+  },
+  orderBy:
+    sortOrder === "desc"
+      ? (_, { desc }) => [desc(orderColumn)]
+      : (_, { asc }) => [asc(orderColumn)],
+  limit,
+  offset,
+});
 
   return {
     data,

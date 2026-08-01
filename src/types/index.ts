@@ -1,4 +1,4 @@
-
+export * from './city.types';
 
 export interface PaginationParams {
   page?: number;
@@ -6,3 +6,4 @@ export interface PaginationParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
+

@@ -10,6 +10,7 @@ export const createCitySchema = z.object({
   medianHousePrice: z.number().nonnegative().optional(),
   currency:         z.enum(CURRENCIES).default('USD'),
   notes:            z.string().trim().optional(),
+  rating :           z.number().min(0).max(10),
   lat:              z.number().min(-90).max(90).optional(),
   lng:              z.number().min(-180).max(180).optional(),
 });
@@ -39,11 +40,12 @@ export const getCitiesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 
   sortBy: z.enum([
-    "name",
-    "countryCode",
-    "region",
-    "medianHousePrice",
-  ]).default("name"),
+  "name",
+  "countryCode",
+  "region",
+  "medianHousePrice",
+  "rating",
+]).default("rating"),
 
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
 
