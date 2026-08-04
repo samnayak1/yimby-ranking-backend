@@ -21,7 +21,7 @@ export type Rating = { year: number; rating: number };
 
 export interface UpsertCityMetrics {
   year: number;
-  rating: number;
+  rating?: number;
 
   permitsIssued?: number;
   permitsPer1000Residents?: number;

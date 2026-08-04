@@ -12,6 +12,8 @@ export interface DbProvider {
 
   getDb(): DrizzleDb;
 
+  getDatabaseProvider(): Database.Database;
+
 
   close(): void;
 }
@@ -36,6 +38,12 @@ export class SQLiteProvider implements DbProvider {
   getDb(): DrizzleDb {
     return this.db;
   }
+
+  getDatabaseProvider(): Database.Database {
+    return this.sqlite;
+  }
+
+
 
   close(): void {
     this.sqlite.close();

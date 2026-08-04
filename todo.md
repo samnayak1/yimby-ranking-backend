@@ -2,19 +2,9 @@
 2. Public voting (low priority)
 3. user comments and reactions (low priority)
 3. list of notable constructions (low priority)
-~4. Add other metrics like number of permits, time for permits, (per year), , permits/capita, housing starts (per year), median per 1bhk/2bhk/3bhk~
-~5. validation~
-6. sql backup
-~7. Paginate queries~
 8. Soft delete 
-~9. Enums as a config instead of hardcoded~
 10. Host
-~11. Store country code instead of name~
-~12. Add types for all anys~
-13. Crawl4ai to parse webpages
-14. Help button and donate button (yimby action and opensource)
 15. Have inoffice/runningForOffice/Retired instead of only inoffice
-16. Footer
 17. More metrics like
 Median home price (or price per m² if available)
 Housing completions per 1,000 residents
@@ -27,9 +17,7 @@ Zoning reforms (e.g. "Single-family zoning abolished")
 Transit expansions (new metro/BRT/light rail lines)
 Sources (links to annual housing reports or city dashboards)
 18. RBAC on db
-19. Store data in source instead of relying on llm memory
-20. Before after pictures
-
+21. mobile view
 
 
 
@@ -39,7 +27,7 @@ Bugs
 ~2. Filters show all countries~
 ~3. Filter country does not work~
 ~4. Sort should not only sort the first page but all pages~
-5. Parser could get the pop
+~5. Parser could get the pop~
 ~7. Show nationality in table~
 ~8. delete ~
 

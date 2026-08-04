@@ -102,10 +102,11 @@ if (maxScore !== undefined) {
     offset,
   });
 
-  const data = citiesResult.map(city => ({
+const data = citiesResult.map(city => ({
   ...city,
   ratings: city.ratings.map(r => ({
     ...r,
+    rating: r.rating ?? undefined,
     permitsIssued: r.permitsIssued ?? undefined,
     permitsPer1000Residents: r.permitsPer1000Residents ?? undefined,
     housingStarts: r.housingStarts ?? undefined,

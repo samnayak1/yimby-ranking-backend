@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 export const cities = sqliteTable(
   "cities",
@@ -8,7 +8,7 @@ export const cities = sqliteTable(
     name: text("name").notNull(),
     countryCode: text("country_code").notNull(),
     region: text("region"),
-    rating: integer("rating"),
+    rating: real("rating"),
     medianHousePrice: real("median_house_price"),
     currency: text("currency").default("USD"),
     notes: text("notes"),
@@ -19,6 +19,12 @@ export const cities = sqliteTable(
   },
   (t) => [
     unique("uq_city_name_country").on(t.name, t.countryCode),
+
+    index("idx_cities_name").on(t.name),
+    index("idx_cities_country").on(t.countryCode),
+    index("idx_cities_region").on(t.region),
+    index("idx_cities_rating").on(t.rating),
+    index("idx_cities_price").on(t.medianHousePrice),
   ]
 );
 
@@ -32,7 +38,7 @@ export const cityRatings = sqliteTable("city_ratings", {
 
   year: integer("year").notNull(),
 
-  rating: integer("rating").notNull(),
+  rating: real("rating"),
 
   permitsIssued: integer("permits_issued"),
 

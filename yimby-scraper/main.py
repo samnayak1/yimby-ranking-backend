@@ -21,7 +21,6 @@ from pathlib import Path
 from config import YEARS_BACK
 from scrapers.reddit import fetch_posts, chunk_posts, bundle_for_entity, Post
 from extractors.llm_extractor import discover_all_entities, extract_city, extract_politician, infer_coordinates
-from utils.geocoder import geocode
 from utils.housing_stats import fetch_housing_stats
 from db.writer import write_city, write_politician
 from db.file_writer import save_json
@@ -149,8 +148,7 @@ async def process_city(name: str, posts: list[Post], reextract: bool = False) ->
     # Geocode if missing
     if not data.get("lat") or not data.get("lng"):
         coords = await infer_coordinates(data.get("name", name), data.get("country", ""))
-        if not coords:
-            coords = await geocode(data.get("name", name), data.get("country", ""))
+
         if coords:
             data.update(coords)
             _write(ext, data)   # update cache with coords

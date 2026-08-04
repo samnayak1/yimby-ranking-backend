@@ -6,6 +6,8 @@ cd server
 npx drizzle-kit generate
 npx drizzle-kit migrate
 
+chmod +x src/jobs/backup.sh
+
 sqlite3 db/database.sqlite
  .tables
  .schema

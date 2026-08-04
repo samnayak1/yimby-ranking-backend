@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 export const politicians = sqliteTable(
   "politicians",
@@ -11,12 +11,18 @@ export const politicians = sqliteTable(
     nationalityCode: text("nationality_code").notNull(),
     politicalLeaning: text("political_leaning"),
     notes: text("notes"),
-    rating: integer("rating"),
+    rating: real("rating"),
     createdAt: text("created_at").default(sql`(datetime('now'))`),
     updatedAt: text("updated_at").default(sql`(datetime('now'))`),
   },
   (t) => [
     unique("uq_politician_name").on(t.name),
+
+    index("idx_politicians_name").on(t.name),
+    index("idx_politicians_rating").on(t.rating),
+    index("idx_politicians_nationality").on(t.nationalityCode),
+    index("idx_politicians_designation").on(t.designation),
+    index("idx_politicians_leaning").on(t.politicalLeaning),
   ]
 );
 
@@ -27,7 +33,7 @@ export const politicianRatings = sqliteTable('politician_ratings', {
                   .notNull()
                   .references(() => politicians.id, { onDelete: 'cascade' }),
   year:         integer('year').notNull(),
-  rating:      integer('rating').notNull(),
+  rating:      real('rating').notNull(),
   createdAt:    text('created_at').default(sql`(datetime('now'))`),
 }, (t) => [ unique('uq_politician_year').on(t.politicianId, t.year) ])
 
