@@ -6,6 +6,7 @@ import {
   UpsertPoliticianRatingDto,
 } from '../schemas/politician.schemas';
 import { PoliticianFilters } from '../models';
+import { PoliticianStatus } from '../types/enums';
 
 export class PoliticianController {
   constructor(private readonly service: PoliticianService) {}
@@ -21,7 +22,7 @@ export class PoliticianController {
         designation,
         politicalLeaning,
         nationalityCode,
-        isInOffice,
+        status,
         minScore,
         maxScore,
         cityId,
@@ -36,7 +37,7 @@ export class PoliticianController {
         designation: designation as string,
         politicalLeaning: politicalLeaning as string,
         nationalityCode: nationalityCode as string,
-        isInOffice: isInOffice !== undefined ? isInOffice === 'true' : undefined,
+        status: status as PoliticianStatus,
         minScore: minScore ? Number(minScore) : undefined,
         maxScore: maxScore ? Number(maxScore) : undefined,
         cityId: cityId ? Number(cityId) : undefined,

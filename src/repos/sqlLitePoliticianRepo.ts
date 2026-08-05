@@ -24,7 +24,7 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
   designation,
   politicalLeaning,
   nationalityCode,
-  isInOffice,
+  status,
   minScore,
   maxScore,
 } = filters || {};
@@ -47,8 +47,8 @@ export class SQLLitePoliticianRepo implements IPoliticianRepo{
     conditions.push(eq(politicians.nationalityCode, nationalityCode));
   }
 
-  if (isInOffice !== undefined) {
-    conditions.push(eq(politicians.isInOffice, isInOffice ? 1 : 0));
+  if (status !== undefined) {
+    conditions.push(eq(politicians.status, status));
   }
 
   if (minScore !== undefined) {

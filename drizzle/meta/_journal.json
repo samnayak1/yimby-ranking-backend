@@ -36,6 +36,20 @@
       "when": 1785848837934,
       "tag": "0004_curved_dexter_bennett",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1785857200574,
+      "tag": "0005_sparkling_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1785858389992,
+      "tag": "0006_white_valkyrie",
+      "breakpoints": true
     }
   ]
 }

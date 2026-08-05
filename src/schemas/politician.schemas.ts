@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { options } from '../config/config';
+import { PoliticianStatus } from '../types/enums';
 
 
 
@@ -10,7 +11,7 @@ const LEANINGS = options.politicalLeanings;
 export const createPoliticianSchema = z.object({
   name:             z.string().trim().min(1, 'Name is required'),
   designation:      z.enum(DESIGNATIONS).optional(),
-  isInOffice:       z.number().int().min(0).max(1).default(1),
+  status:       z.enum(PoliticianStatus).optional(),
   nationalityCode:      z.string().trim(),
   rating :              z.number().min(0).max(10),
   politicalLeaning: z.enum(LEANINGS).optional(),
@@ -42,10 +43,7 @@ sortBy: z.enum([
   politicalLeaning: z.string().optional(),
   nationalityCode: z.string().length(2).optional(),
 
-  isInOffice: z
-    .enum(["true", "false"])
-    .transform(v => v === "true")
-    .optional(),
+  status: z.enum(PoliticianStatus).optional(),
 
   minScore: z.coerce.number().min(1).max(10).optional(),
   maxScore: z.coerce.number().min(1).max(10).optional(),

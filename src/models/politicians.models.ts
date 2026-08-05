@@ -7,7 +7,11 @@ export const politicians = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
     designation: text("designation"),
-    isInOffice: integer("is_in_office").notNull().default(1),
+    status: text("status", {
+      enum: ["RUNNING", "INOFFICE", "RETIRED", "OUT"],
+    })
+      .notNull()
+      .default("INOFFICE"),
     nationalityCode: text("nationality_code").notNull(),
     politicalLeaning: text("political_leaning"),
     notes: text("notes"),

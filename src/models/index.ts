@@ -2,6 +2,7 @@ import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { politicianRatings, politicians } from "./politicians.models";
 import { cities, cityRatings } from "./cities.models";
 import { PaginationParams } from "../types";
+import { PoliticianStatus } from "../types/enums";
 export * from './cities.models'
 export * from './politicians.models'
 
@@ -52,7 +53,7 @@ export interface PoliticianFilters extends PaginationParams {
   designation?: string;
   politicalLeaning?: string;
   nationalityCode?: string;
-  isInOffice?: boolean;
+  status?: PoliticianStatus;
   minScore?: number;
   maxScore?: number;
   cityId?: number;

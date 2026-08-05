@@ -139,7 +139,7 @@ Extract a structured JSON object with these exact fields:
 {{
   "name": "full name",
   "designation": "one of: President, Vice President, Prime Minister, Governor, Mayor, Senator, Comptroller, Chief Minister, Minister, MP, Councillor, Other",
-  "isInOffice": 1 or 0,
+  "status": "one of: RUNNING, INOFFICE, RETIRED, OUT",
   "nationality": "full nationality e.g. American, German, British",
   "nationalityCode": "ISO 2-letter country code e.g. US, DE, GB",
   "politicalLeaning": "one of: Liberal, Conservative, Democratic Socialist, Libertarian, Nationalist, Green",

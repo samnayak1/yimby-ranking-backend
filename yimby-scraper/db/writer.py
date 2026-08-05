@@ -110,7 +110,7 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
     INSERT INTO politicians (
         name,
         designation,
-        is_in_office,
+        status,
         nationality_code,
         political_leaning,
         notes,
@@ -119,7 +119,7 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
     VALUES (
         :name,
         :designation,
-        :isInOffice,
+        :status,
         :nationalityCode,
         :politicalLeaning,
         :notes,
@@ -127,7 +127,7 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
     )
     ON CONFLICT(name) DO UPDATE SET
         designation = COALESCE(excluded.designation, designation),
-        is_in_office = excluded.is_in_office,
+        status = COALESCE(excluded.status, status),
         nationality_code = COALESCE(excluded.nationality_code, nationality_code),
         political_leaning = COALESCE(excluded.political_leaning, political_leaning),
         notes = COALESCE(excluded.notes, notes),
@@ -138,7 +138,7 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
     {
         "name": pol.get("name"),
         "designation": pol.get("designation"),
-        "isInOffice": pol.get("isInOffice", 1),
+        "status": pol.get("status"),
         "nationalityCode": pol.get("nationalityCode"),
         "politicalLeaning": pol.get("politicalLeaning"),
         "notes": pol.get("notes"),
