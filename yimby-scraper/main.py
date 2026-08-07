@@ -117,7 +117,8 @@ async def stage_scrape() -> tuple[list[Post], dict]:
     return posts, entities
 
 
-# ── Stage 2: Extract ──────────────────────────────────────────
+# ──---------──────────────────────────────────────────
+#stage extract
 
 async def process_city(name: str, posts: list[Post], reextract: bool = False) -> bool:
     ext = extracted_path("city", name)
@@ -145,7 +146,7 @@ async def process_city(name: str, posts: list[Post], reextract: bool = False) ->
 
         _write(ext, data)
 
-    # Geocode if missing
+    # if geo code missing then try and get the llm to do it for you
     if not data.get("lat") or not data.get("lng"):
         coords = await infer_coordinates(data.get("name", name), data.get("country", ""))
 
@@ -238,7 +239,7 @@ async def stage_extract(
         await asyncio.gather(*[safe_politician(p) for p in politicians])
 
 
-# ── Entry point ───────────────────────────────────────────────
+
 
 async def main(stage: str | None, reextract: bool, only: str | None) -> None:
     print("=" * 60)

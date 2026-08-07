@@ -13,7 +13,7 @@ import asyncio
 from typing import Optional, List, Dict
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from typing import Optional, Dict
+
 
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,66 @@ import datetime
 
 CURRENT_YEAR = datetime.date.today().year
 
-# ── Helpers ───────────────────────────────────────────────────
+#MODELS
+class CityExtraction(BaseModel):
+    """Structured output for city extraction."""
+    name: str = Field(description="City name as commonly known")
+    country: str = Field(description="Full country name e.g. United States, Germany")
+    region: Optional[str] = Field(None, description="State or province e.g. California, Bavaria")
+    countryCode: str = Field(
+        ...,
+        min_length=2,
+        max_length=2,
+        description="ISO 3166-1 alpha-2 country code e.g. US, DE, FR, GB"
+    )
+    notes: str = Field(description="2-3 sentence summary of housing policy stance")
+    rating: int = Field(..., ge=1, le=10, description="YIMBY score 1-10")
+
+class PoliticianExtraction(BaseModel):
+    """Structured output for politician extraction."""
+    name: str = Field(description="Full name")
+    designation: str = Field(description="e.g. Senator, Mayor, Governor")
+    status: str = Field(description="RUNNING, INOFFICE, RETIRED, OUT")
+    nationality: str = Field(description="Full nationality e.g. American, German")
+    nationalityCode: str = Field(
+        ...,
+        min_length=2,
+        max_length=2,
+        description="ISO 3166-1 alpha-2 country code e.g. US, DE, GB"
+    )
+    politicalLeaning: str = Field(description="e.g. Liberal, Conservative, Green")
+    notes: str = Field(description="80-150 word summary of Reddit user opinions")
+    rating: int = Field(..., ge=1, le=10, description="YIMBY score 1-10")
+
+class Coordinates(BaseModel):
+    lat: float = Field(description="Latitude in decimal degrees")
+    lng: float = Field(description="Longitude in decimal degrees")
+
+
+class HousingStats(BaseModel):
+    year: int
+
+    population: int | None = None
+
+    medianHousePrice: int | None = None
+    currency: str | None = None
+
+    permitsIssued: int | None = None
+    permitsPer1000Residents: float | None = None
+
+    housingStarts: int | None = None
+    homesCompleted: int | None = None
+
+    averagePermitDays: int | None = None
+
+    confidence: int = Field(
+        ge=0,
+        le=100,
+        description="0-100 confidence in these estimates"
+    )
+
+
+
 
 
 def _parse_json(text: str) -> Optional[dict | list]:
@@ -33,7 +92,7 @@ def _parse_json(text: str) -> Optional[dict | list]:
         return None
 
 
-# ── Pass 1: Discovery ─────────────────────────────────────────
+# DISCOVERY
 
 DISCOVERY_SYSTEM = """
 You are a housing policy analyst reading Reddit posts from r/yimby.
@@ -103,7 +162,7 @@ async def discover_all_entities(chunks: List[str]) -> Dict[str, List[str]]:
     }
 
 
-# ── Pass 2: Extraction ────────────────────────────────────────
+# EXTRACTION
 
 CITY_SYSTEM = f"""
 You are a housing policy analyst. You will be given Reddit posts from r/yimby about a specific city.
@@ -116,12 +175,7 @@ Extract a structured JSON object with these exact fields:
   "region": "state or province e.g. California, Bavaria",
   "countryCode": "ISO 2-letter code e.g. US, DE, FR, GB",
   "notes": "2-3 sentence summary of this city's housing policy stance",
-  "rating": "1-10 based on the rating scale",
-  "ratings": [
-    {{"year": {CURRENT_YEAR}, "rating": 7}},
-    {{"year": {CURRENT_YEAR - 1}, "rating": 6}},
-    ...one entry per year back to {CURRENT_YEAR - YEARS_BACK}
-  ]
+  "rating": "1-10 based on the rating scale"
 }}
 
 Rating scale 1–10: 10 = most YIMBY (pro-housing, fast permits, upzoning).
@@ -144,12 +198,7 @@ Extract a structured JSON object with these exact fields:
   "nationalityCode": "ISO 2-letter country code e.g. US, DE, GB",
   "politicalLeaning": "one of: Liberal, Conservative, Democratic Socialist, Libertarian, Nationalist, Green",
   "notes": "2-3 sentence summary of their housing policy record",
-  "rating": "1-10 based on the rating scale",
-  "ratings": [
-    {{"year": {CURRENT_YEAR}, "rating": 8}},
-    {{"year": {CURRENT_YEAR - 1}, "rating": 7}},
-    ...one entry per year back to {CURRENT_YEAR - YEARS_BACK}
-  ]
+  "rating": "1-10 based on the rating scale"
 }}
 
 Rating scale 1–10: 10 = strongest YIMBY advocate. 1 = strongest NIMBY.
@@ -176,53 +225,57 @@ Return ONLY valid JSON. No markdown. No explanation.
 
 
 async def extract_city(name: str, reddit_text: str) -> Optional[dict]:
+    """Pass 2: Extract structured city data using Pydantic model."""
     if not reddit_text.strip():
         return None
-    response = await llm.ainvoke([
-        SystemMessage(content=CITY_SYSTEM),
-        HumanMessage(content=f"City: {name}\n\nPosts:\n{reddit_text[:6000]}"),
-    ])
-    result = _parse_json(response.content)
-    if isinstance(result, dict):
-        result["_entity_name"] = name
-        return result
-    return None
 
+    try:
+        # Use structured output with the CityExtraction model
+        structured_llm = llm.with_structured_output(CityExtraction)
+        result = await structured_llm.ainvoke([
+            SystemMessage(content=CITY_SYSTEM),
+            HumanMessage(content=f"City: {name}\n\nPosts:\n{reddit_text[:6000]}"),
+        ])
+        # result is a CityExtraction instance
+        return result.model_dump() | {"_entity_name": name}
+    except Exception as e:
+        print(f"  Structured output failed, falling back to JSON parsing: {e}")
+        # Fallback: use the old JSON parser
+        response = await llm.ainvoke([
+            SystemMessage(content=CITY_SYSTEM),
+            HumanMessage(content=f"City: {name}\n\nPosts:\n{reddit_text[:6000]}"),
+        ])
+        parsed = _parse_json(response.content)
+        if isinstance(parsed, dict):
+            parsed["_entity_name"] = name
+            return parsed
+        return None
 
 async def extract_politician(name: str, reddit_text: str) -> Optional[dict]:
+    """Pass 2: Extract structured politician data using Pydantic model."""
     if not reddit_text.strip():
         return None
-    response = await llm.ainvoke([
-        SystemMessage(content=POLITICIAN_SYSTEM),
-        HumanMessage(
-            content=f"Politician: {name}\n\nPosts:\n{reddit_text[:6000]}"),
-    ])
-    result = _parse_json(response.content)
-    if isinstance(result, dict):
-        result["_entity_name"] = name
-        return result
-    return None
+
+    try:
+        structured_llm = llm.with_structured_output(PoliticianExtraction)
+        result = await structured_llm.ainvoke([
+            SystemMessage(content=POLITICIAN_SYSTEM),
+            HumanMessage(content=f"Politician: {name}\n\nPosts:\n{reddit_text[:6000]}"),
+        ])
+        return result.model_dump() | {"_entity_name": name}
+    except Exception as e:
+        print(f"  Structured output failed, falling back to JSON parsing: {e}")
+        response = await llm.ainvoke([
+            SystemMessage(content=POLITICIAN_SYSTEM),
+            HumanMessage(content=f"Politician: {name}\n\nPosts:\n{reddit_text[:6000]}"),
+        ])
+        parsed = _parse_json(response.content)
+        if isinstance(parsed, dict):
+            parsed["_entity_name"] = name
+            return parsed
+        return None
 
 
-class HousingStats(BaseModel):
-    year: int
-
-    population: int | None = None
-
-    medianHousePrice: int | None = None
-    currency: str | None = None
-
-    permitsIssued: int | None = None
-    permitsPer1000Residents: float | None = None
-
-    housingStarts: int | None = None
-    homesCompleted: int | None = None
-
-    averagePermitDays: int | None = None
-
-    confidence: int = Field(
-        description="0-100 confidence in these estimates"
-    )
 
 
 async def infer_housing_stats(
@@ -278,9 +331,7 @@ For each year estimate:
         return []
 
 
-class Coordinates(BaseModel):
-    lat: float = Field(description="Latitude in decimal degrees")
-    lng: float = Field(description="Longitude in decimal degrees")
+
 
 
 async def infer_coordinates(

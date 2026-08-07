@@ -2,9 +2,7 @@
 2. Public voting (low priority)
 3. user comments and reactions (low priority)
 3. list of notable constructions (low priority)
-8. Soft delete 
 10. Host
-15. Have inoffice/runningForOffice/Retired instead of only inoffice
 17. More metrics like
 Median home price (or price per m² if available)
 Housing completions per 1,000 residents
@@ -20,16 +18,6 @@ Sources (links to annual housing reports or city dashboards)
 21. mobile view
 
 
-
-
-Bugs
-1. Map loads a second time but not the first
-~2. Filters show all countries~
-~3. Filter country does not work~
-~4. Sort should not only sort the first page but all pages~
-~5. Parser could get the pop~
-~7. Show nationality in table~
-~8. delete ~
 
 
 
