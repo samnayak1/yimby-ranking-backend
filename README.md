@@ -26,3 +26,6 @@ python main.py --stage scrape    # Reddit only, no LLM
 python main.py --stage extract   # LLM only, no Reddit
 python main.py --reextract       # redo LLM, skip Reddit
 python main.py --only cities     # skip politicians
+
+
+docker compose -f docker-compose.dev.yaml up --build

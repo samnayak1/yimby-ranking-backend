@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: development
+
+    volumes:
+      - sqlite_data_dev:/app/db
+      - .:/app
+      - /app/node_modules
+
+    expose:
+      - "3000"
+
+    command: npm run dev
+
+  nginx:
+    image: nginx:alpine
+
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+
+    depends_on:
+      - backend
+
+volumes:
+  sqlite_data_dev:
