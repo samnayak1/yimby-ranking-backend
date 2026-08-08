@@ -17,7 +17,9 @@ services:
       - "3000"
 
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./yimby-ranking-client
+      dockerfile: Dockerfile
 
     restart: unless-stopped
 
