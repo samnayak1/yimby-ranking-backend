@@ -1,0 +1,17 @@
+node_modules
+dist
+.git
+.gitignore
+.vscode
+db
+backups
+database.sqlite
+yimby-ranking-client
+yimby-scraper
+Dockerfile
+.dockerignore
+docker-compose*.yaml
+nginx
+README.md
+todo.md
+*.log

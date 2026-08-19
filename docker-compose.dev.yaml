@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # ts-node and the other devDependencies only exist in the build stage.
+      target: build
 
     restart: unless-stopped
 

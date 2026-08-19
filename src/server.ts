@@ -8,7 +8,7 @@ import { CityService } from "./services/CityService";
 import { PoliticianController } from "./controllers/PoliticianController";
 import { CityController } from "./controllers/CityController";
 import { UserController } from "./controllers/UserController";
-import { createDbProvider } from "./repos/client";
+import { createDbProvider, runMigrations } from "./repos/client";
 import { SQLiteCityRepo } from "./repos/sqlLiteCityRepo";
 import { SQLLitePoliticianRepo } from "./repos/sqlLitePoliticianRepo";
 import { cityRoutes } from "./routes/cityRoutes";
@@ -20,6 +20,7 @@ const app = express();
 app.use(express.json());
 
 const provider = createDbProvider();
+runMigrations(provider);
 
 const politicianRepo = new SQLLitePoliticianRepo(provider);
 const cityRepo = new SQLiteCityRepo(provider);

@@ -1,0 +1,3 @@
+[submodule "yimby-ranking-client"]
+	path = yimby-ranking-client
+	url = https://github.com/samnayak1/yimby-ranking-client.git

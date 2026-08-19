@@ -29,3 +29,13 @@ python main.py --only cities     # skip politicians
 
 
 docker compose -f docker-compose.dev.yaml up --build
+
+
+
+  git clone --recurse-submodules https://github.com/samnayak1/yimby-ranking-backend.git
+  cd yimby-ranking-backend
+  cp .env.example .env   # fill in
+  docker compose up -d --build
+
+  or 
+   docker compose -f docker-compose.dev.yaml up --build

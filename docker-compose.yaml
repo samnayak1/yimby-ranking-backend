@@ -4,8 +4,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
 
     restart: unless-stopped
+
+    env_file:
+      - .env
 
     environment:
       NODE_ENV: production
@@ -16,10 +20,26 @@ services:
     expose:
       - "3000"
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   nginx:
     build:
       context: ./yimby-ranking-client
       dockerfile: Dockerfile
+      args:
+        VITE_COGNITO_USER_POOL_ID: ${VITE_COGNITO_USER_POOL_ID:?set in .env}
+        VITE_COGNITO_CLIENT_ID: ${VITE_COGNITO_CLIENT_ID:?set in .env}
 
     restart: unless-stopped
 
@@ -29,8 +49,15 @@ services:
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
 volumes:
   sqlite_data:

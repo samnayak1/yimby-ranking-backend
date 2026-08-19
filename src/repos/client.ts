@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { drizzle as drizzleSQLite } from 'drizzle-orm/better-sqlite3';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import * as schema from '../models/index';
 import path from 'path';
 import fs from 'fs';
@@ -20,6 +21,7 @@ export interface DbProvider {
 
 
 const DEFAULT_PATH = path.join(__dirname, '../../db/database.sqlite');
+const MIGRATIONS_DIR = path.join(__dirname, '../../drizzle');
 
 export class SQLiteProvider implements DbProvider {
   private readonly db: DrizzleDb;
@@ -53,4 +55,10 @@ export class SQLiteProvider implements DbProvider {
 //factory that returns sqllite.
 export function createDbProvider(): DbProvider {
    return new SQLiteProvider();
+}
+
+// The production database lives on an empty named volume, so the schema has to
+// be brought up to date before the server starts serving.
+export function runMigrations(provider: DbProvider): void {
+  migrate(provider.getDb(), { migrationsFolder: MIGRATIONS_DIR });
 }
