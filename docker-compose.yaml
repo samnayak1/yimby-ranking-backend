@@ -1,5 +1,54 @@
 services:
 
+  # Runs to completion before the backend boots.
+  litestream-restore:
+    image: litestream/litestream:0.3.13
+    restart: "no"
+    env_file:
+      - .env
+    environment:
+      LITESTREAM_S3_PREFIX: ${LITESTREAM_S3_PREFIX:-yimby/database.sqlite}
+      LITESTREAM_SYNC_INTERVAL: ${LITESTREAM_SYNC_INTERVAL:-1m}
+    user: "1000:1000"
+    volumes:
+      - sqlite_data:/app/db
+      - ./litestream.yml:/etc/litestream.yml:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        if [ -f /app/db/database.sqlite ]; then
+          echo "litestream: database.sqlite present, skipping restore"
+          exit 0
+        fi
+        echo "litestream: no local database, attempting restore from S3"
+        litestream restore -if-replica-exists -config /etc/litestream.yml /app/db/database.sqlite
+        echo "litestream: restore step complete"
+
+  # streams the wal to s3 bucket
+  litestream:
+    image: litestream/litestream:0.3.13
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      LITESTREAM_S3_PREFIX: ${LITESTREAM_S3_PREFIX:-yimby/database.sqlite}
+      LITESTREAM_SYNC_INTERVAL: ${LITESTREAM_SYNC_INTERVAL:-5m}
+    user: "1000:1000"
+    volumes:
+      - sqlite_data:/app/db
+      - ./litestream.yml:/etc/litestream.yml:ro
+    command: ["replicate", "-config", "/etc/litestream.yml"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      litestream-restore:
+        condition: service_completed_successfully
+
   backend:
     build:
       context: .
@@ -32,6 +81,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+    depends_on:
+      litestream-restore:
+        condition: service_completed_successfully
 
   nginx:
     build:

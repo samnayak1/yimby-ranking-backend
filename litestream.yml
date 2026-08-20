@@ -1,0 +1,17 @@
+dbs:
+  - path: /app/db/database.sqlite
+    replicas:
+      - type: s3
+        bucket: $S3_BUCKET
+        path: $LITESTREAM_S3_PREFIX
+        region: $AWS_REGION
+        # How often WAL frames are shipped. This is your RPO: on instance loss
+        # you lose at most this much. Only issues S3 writes when the WAL has
+        # actually changed, so an idle DB costs nothing regardless of the value.
+        sync-interval: $LITESTREAM_SYNC_INTERVAL
+        access-key-id: $AWS_ACCESS_KEY_ID
+        secret-access-key: $AWS_SECRET_ACCESS_KEY
+        # Keep a full snapshot every 6h and 30 days of WAL history behind it,
+        # so point-in-time restore works anywhere in that window.
+        snapshot-interval: 6h
+        retention: 720h
