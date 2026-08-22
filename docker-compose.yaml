@@ -90,7 +90,7 @@ services:
       litestream-restore:
         condition: service_completed_successfully
 
-  nginx:
+  caddy:
     build:
       context: ./yimby-ranking-client
       dockerfile: Dockerfile
@@ -100,13 +100,24 @@ services:
 
     restart: unless-stopped
 
-    mem_limit: 64m
+    mem_limit: 128m
+
+    environment:
+      # Leave unset for plain HTTP on :80. Set to a real domain that already
+      # resolves to this instance and Caddy issues a Let's Encrypt cert itself.
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
 
     ports:
       - "80:80"
+      - "443:443"
+      - "443:443/udp"
 
     volumes:
-      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      # Issued certificates live here. Without a persistent volume Caddy
+      # re-requests them on every recreate and will hit Let's Encrypt's
+      # duplicate-certificate rate limit (5/week).
+      - caddy_data:/data
+      - caddy_config:/config
 
     logging:
       driver: json-file
@@ -120,3 +131,5 @@ services:
 
 volumes:
   sqlite_data:
+  caddy_data:
+  caddy_config:

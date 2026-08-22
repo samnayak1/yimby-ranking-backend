@@ -120,3 +120,28 @@ V8 garbage-collects rather than growing into swap-thrash.
 
 `mem_limit` on each service caps runtime usage (backend 384m, nginx 64m,
 litestream 64m) so no single container can OOM-kill the others.
+
+## Web server: Caddy
+
+The client image (`yimby-ranking-client/Dockerfile`) builds the SPA and serves it
+with Caddy, configured by `yimby-ranking-client/Caddyfile`. `nginx/nginx.prod.conf`
+is no longer used by `docker-compose.yaml` (the dev compose still uses
+`nginx/nginx.dev.conf`).
+
+### HTTPS
+
+`SITE_ADDRESS` in `.env` drives it:
+
+| Value | Behaviour |
+|---|---|
+| unset / blank | plain HTTP on `:80` — fine before you have a domain |
+| `yimby.example.com` | Caddy obtains a Let's Encrypt cert and redirects HTTP to HTTPS |
+
+Requirements for the domain case:
+- the domain must already resolve to the instance's public IP
+- security group must allow **both** 80 and 443 inbound (80 is required for the
+  ACME challenge and the redirect, not just 443)
+
+Certificates persist in the `caddy_data` volume. Do not `docker compose down -v`
+casually — re-requesting certs repeatedly hits Let's Encrypt's limit of 5
+duplicate certificates per week.

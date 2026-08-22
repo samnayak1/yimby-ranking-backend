@@ -14,7 +14,7 @@ echo "==> Building backend"
 docker compose build backend
 
 echo "==> Building client (tsc + vite; the memory-hungry one)"
-docker compose build nginx
+docker compose build caddy
 
 echo "==> Starting"
 docker compose up -d
