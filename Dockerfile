@@ -10,6 +10,7 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
 
+ENV NODE_OPTIONS=--max-old-space-size=512
 RUN npm run build
 
 

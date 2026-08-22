@@ -101,3 +101,22 @@ it does not eliminate steady-state cost.
 
 `snapshot-interval` (6h) and `retention` (720h) are set in `litestream.yml` and are
 independent of this.
+
+## Running on a 1 GiB instance (t3a.micro / t3.micro)
+
+Runtime fits comfortably; **image builds are what run out of memory**. Two steps:
+
+```bash
+./scripts/setup-swap.sh   # once per instance: 2 GB swapfile, swappiness=10
+./scripts/deploy.sh       # builds serially, then `up -d`
+```
+
+`scripts/deploy.sh` exists because `docker compose build` parallelises by default,
+which starts two `npm ci` runs and two TypeScript/Vite builds simultaneously — the
+usual cause of an OOM-killed deploy on this instance size.
+
+Both Dockerfiles set `NODE_OPTIONS=--max-old-space-size=512` for the build step so
+V8 garbage-collects rather than growing into swap-thrash.
+
+`mem_limit` on each service caps runtime usage (backend 384m, nginx 64m,
+litestream 64m) so no single container can OOM-kill the others.

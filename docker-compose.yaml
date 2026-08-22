@@ -30,6 +30,8 @@ services:
   litestream:
     image: litestream/litestream:0.3.13
     restart: unless-stopped
+
+    mem_limit: 64m
     env_file:
       - .env
     environment:
@@ -56,6 +58,8 @@ services:
       target: runtime
 
     restart: unless-stopped
+
+    mem_limit: 384m
 
     env_file:
       - .env
@@ -95,6 +99,8 @@ services:
         VITE_COGNITO_CLIENT_ID: ${VITE_COGNITO_CLIENT_ID:?set in .env}
 
     restart: unless-stopped
+
+    mem_limit: 64m
 
     ports:
       - "80:80"
