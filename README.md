@@ -14,7 +14,29 @@ sqlite3 db/database.sqlite
 
 PRAGMA index_list(cities);
 PRAGMA index_list(politicians);
+sudo dnf install -y docker
+ sudo systemctl enable --now docker
+  sudo usermod -aG docker $USER 
 
+sudo docker run hello-world
+
+# Create the CLI plugins directory
+mkdir -p ~/.docker/cli-plugins
+
+# Download the Docker Compose plugin
+COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -SL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-$(uname -m)" -o ~/.docker/cli-plugins/docker-compose
+
+# Make it executable
+chmod +x ~/.docker/cli-plugins/docker-compose
+
+# Verify installation
+docker compose version
+
+ sudo usermod -aG docker ec2-user
+  newgrp docker          # applies to current shell; or just log out and back in
+  id -nG                 # confirm 'docker' is listed
+  docker ps              # should work without sudo now
 
 
 python3 --version
@@ -31,7 +53,7 @@ python main.py --only cities     # skip politicians
 docker compose -f docker-compose.dev.yaml up --build
 
 
-
+git --version
   git clone --recurse-submodules https://github.com/samnayak1/yimby-ranking-backend.git
   cd yimby-ranking-backend
   cp .env.example .env   # fill in
@@ -39,6 +61,13 @@ docker compose -f docker-compose.dev.yaml up --build
 
   or 
    docker compose -f docker-compose.dev.yaml up --build
+
+
+
+   ```bash
+./scripts/setup-swap.sh   # once per instance: 2 GB swapfile, swappiness=10
+./scripts/deploy.sh       # builds serially, then `up -d`
+```
 ## Database durability
 
 The SQLite DB lives in the `sqlite_data` Docker volume at `/app/db/database.sqlite`.
