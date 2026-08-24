@@ -115,9 +115,71 @@ async def upsert_politician(db: aiosqlite.Connection, pol: Dict) -> Optional[int
 
 
 
-async def write_city(city_data: Dict):
+async def upsert_city_rating(
+    db: aiosqlite.Connection,
+    city_id: int,
+    stat: Dict,
+) -> None:
+    """
+Insert or update a city rating for a given year.
+    """
+    await db.execute(
+        """
+        INSERT INTO city_ratings (
+            city_id,
+            year,
+            permits_issued,
+            permits_per_1000_residents,
+            housing_starts,
+            homes_completed,
+            average_permit_days,
+            population,
+            median_housing_price
+        )
+        VALUES (
+            :cityId,
+            :year,
+            :permitsIssued,
+            :permitsPer1000Residents,
+            :housingStarts,
+            :homesCompleted,
+            :averagePermitDays,
+            :population,
+            :medianHousingPrice
+        )
+        ON CONFLICT(city_id, year) DO UPDATE SET
+            permits_issued = COALESCE(excluded.permits_issued, city_ratings.permits_issued),
+            permits_per_1000_residents = COALESCE(excluded.permits_per_1000_residents, city_ratings.permits_per_1000_residents),
+            housing_starts = COALESCE(excluded.housing_starts, city_ratings.housing_starts),
+            homes_completed = COALESCE(excluded.homes_completed, city_ratings.homes_completed),
+            average_permit_days = COALESCE(excluded.average_permit_days, city_ratings.average_permit_days),
+            population = COALESCE(excluded.population, city_ratings.population),
+            median_housing_price = COALESCE(excluded.median_housing_price, city_ratings.median_housing_price)
+        """,
+        {
+            "cityId": city_id,
+            "year": stat.get("year"),
+            "permitsIssued": stat.get("permitsIssued"),
+            "permitsPer1000Residents": stat.get("permitsPer1000Residents"),
+            "housingStarts": stat.get("housingStarts"),
+            "homesCompleted": stat.get("homesCompleted"),
+            "averagePermitDays": stat.get("averagePermitDays"),
+            "population": stat.get("population"),
+
+            "medianHousingPrice": stat.get("medianHousePrice"),
+        },
+    )
+
+
+async def write_city(city_data: Dict, stats: Optional[List[Dict]] = None):
     async with aiosqlite.connect(DB_PATH) as db:
         city_id = await upsert_city(db, city_data)
+
+        if city_id and stats:
+            for stat in stats:
+                if stat.get("year") is not None:
+                    await upsert_city_rating(db, city_id, stat)
+
         await db.commit()
     return city_id
 

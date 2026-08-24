@@ -52,6 +52,9 @@ export const cityRatings = sqliteTable("city_ratings", {
 
   population: integer("population"),
 
+  // Median dwelling price for THAT year.
+  medianHousingPrice: real("median_housing_price"),
+
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 }, (t) => [
   unique("uq_city_year").on(t.cityId, t.year),

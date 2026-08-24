@@ -30,6 +30,7 @@ export interface UpsertCityMetrics {
   homesCompleted?: number;
   averagePermitDays?: number;
   population?: number;
+  medianHousingPrice?: number;
 }
  
 export type PoliticianWithRatings = Politician & { ratings: Rating[] };

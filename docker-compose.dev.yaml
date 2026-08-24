@@ -1,9 +1,9 @@
+
+name: yimby-ranking-backend-dev
+
 services:
 
-  # Same restore-then-replicate pair as production, but pointed at a separate
-  # S3 prefix (LITESTREAM_DEV_S3_PREFIX) so dev can never overwrite the prod
-  # replica. No `user:` override here: the dev backend uses the `build` stage,
-  # which has no `USER node`, so both run as root.
+
   litestream-restore:
     image: litestream/litestream:0.3.13
     restart: "no"
@@ -48,7 +48,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # ts-node and the other devDependencies only exist in the build stage.
       target: build
 
     restart: unless-stopped
@@ -65,6 +64,34 @@ services:
       - "3000"
 
     command: npm run dev
+
+    depends_on:
+      litestream-restore:
+        condition: service_completed_successfully
+
+
+
+  scraper:
+    build:
+      context: ./yimby-scraper
+      dockerfile: Dockerfile
+
+    profiles: ["scraper"]
+
+    restart: "no"
+
+    env_file:
+      - .env
+      - ./yimby-scraper/.env
+
+    environment:
+      DB_PATH: /data/database.sqlite
+
+    volumes:
+      - ./yimby-scraper:/app
+
+      - sqlite_data_dev:/data
+      - scraper_data_dev:/app/data
 
     depends_on:
       litestream-restore:
@@ -107,3 +134,4 @@ services:
 
 volumes:
   sqlite_data_dev:
+  scraper_data_dev:

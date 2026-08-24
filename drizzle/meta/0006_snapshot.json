@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "831bbf03-e2ec-437b-9eb5-65bc7f6edbdf",
-  "prevId": "2b37a11e-e2f2-434d-abd0-7615ef0f4f29",
+  "id": "07a58dc3-72c9-496b-a713-cebc1c6d4fdc",
+  "prevId": "831bbf03-e2ec-437b-9eb5-65bc7f6edbdf",
   "tables": {
     "politician_ratings": {
       "name": "politician_ratings",
@@ -409,6 +409,13 @@
         "population": {
           "name": "population",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "median_housing_price": {
+          "name": "median_housing_price",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

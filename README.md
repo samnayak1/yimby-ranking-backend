@@ -174,3 +174,52 @@ Requirements for the domain case:
 Certificates persist in the `caddy_data` volume. Do not `docker compose down -v`
 casually — re-requesting certs repeatedly hits Let's Encrypt's limit of 5
 duplicate certificates per week.
+
+## Running the scraper
+
+The scraper is **dev-only** — it is not part of the production compose file. It
+is a one-shot ETL behind a profile, so `up` never starts it:
+
+```bash
+docker compose -f docker-compose.dev.yaml --profile scraper run --rm scraper
+docker compose -f docker-compose.dev.yaml --profile scraper run --rm scraper --only cities
+docker compose -f docker-compose.dev.yaml --profile scraper run --rm scraper --reextract
+```
+
+It mounts `sqlite_data_dev`, so it writes the database the dev backend reads.
+Source is bind-mounted, so edits take effect without a rebuild. Reads
+`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET` and `OPENAI_API_KEY` from
+`yimby-scraper/.env`.
+
+Do not run `python main.py` from the venv: `config.py` defaults `DB_PATH` to the
+host `./db/database.sqlite`, which is neither the dev volume nor production.
+
+Because the scraper never runs in production, scraped rows reach prod only if you
+promote the dev database deliberately, or re-enter the data through the admin UI.
+
+
+## Applying schema changes
+
+Migrations in `drizzle/` are applied by `runMigrations()` at backend startup
+(`src/server.ts`), so **restarting the backend is the migration step**. There is
+no separate command to run in Docker.
+
+```bash
+# dev
+docker compose -f docker-compose.dev.yaml up -d --build backend
+
+# prod
+docker compose up -d --build backend
+```
+
+Verify a column landed:
+
+```bash
+docker compose exec backend node -e \
+  "const d=require('better-sqlite3')('db/database.sqlite');
+   console.log(d.prepare('PRAGMA table_info(city_ratings)').all().map(c=>c.name).join(', '))"
+```
+
+`npm run db:migrate` also works, but `drizzle.config.ts` points at the **host**
+`./db/database.sqlite` — a different file from the one in the Docker volume. Use
+it only when running the backend outside Docker.

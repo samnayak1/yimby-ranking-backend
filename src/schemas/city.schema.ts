@@ -33,6 +33,8 @@ export const upsertCityRatingSchema = z.object({
   averagePermitDays: z.number().int().nonnegative().optional(),
 
   population: z.number().int().positive().optional(),
+
+  medianHousingPrice: z.number().nonnegative().optional(),
 });
 
 export const getCitiesQuerySchema = z.object({

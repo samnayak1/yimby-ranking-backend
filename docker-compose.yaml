@@ -1,3 +1,5 @@
+name: yimby-ranking-backend
+
 services:
 
   # Runs to completion before the backend boots.
@@ -103,8 +105,7 @@ services:
     mem_limit: 128m
 
     environment:
-      # Leave unset for plain HTTP on :80. Set to a real domain that already
-      # resolves to this instance and Caddy issues a Let's Encrypt cert itself.
+
       SITE_ADDRESS: ${SITE_ADDRESS:-:80}
 
     ports:
@@ -113,9 +114,7 @@ services:
       - "443:443/udp"
 
     volumes:
-      # Issued certificates live here. Without a persistent volume Caddy
-      # re-requests them on every recreate and will hit Let's Encrypt's
-      # duplicate-certificate rate limit (5/week).
+
       - caddy_data:/data
       - caddy_config:/config
 

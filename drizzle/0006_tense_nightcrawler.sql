@@ -1,0 +1,1 @@
+ALTER TABLE `city_ratings` ADD `median_housing_price` real;

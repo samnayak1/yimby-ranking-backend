@@ -166,8 +166,9 @@ async def process_city(name: str, posts: list[Post], reextract: bool = False) ->
             _write(ext, data)
 
     if WRITE_TO_DB:
-        city_id = await write_city(data)
-        print(f"  [city] SAVED {name} → DB id={city_id}")
+        city_id = await write_city(data, stats)
+        print(f"  [city] SAVED {name} → DB id={city_id} "
+              f"({len(stats or [])} years of stats)")
     else:
         save_json("city", name, {"city": data, "stats": stats})
         print(f"  [city] SAVED {name} → saved to file")

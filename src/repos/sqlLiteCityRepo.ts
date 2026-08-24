@@ -113,6 +113,7 @@ const data = citiesResult.map(city => ({
     averagePermitDays: r.averagePermitDays ?? undefined,
     homesCompleted: r.homesCompleted ?? undefined,
     population: r.population ?? undefined,
+    medianHousingPrice: r.medianHousingPrice ?? undefined,
   })),
 }));
 
@@ -272,6 +273,7 @@ private groupRating(
   averagePermitDays:
     row.city_ratings.averagePermitDays ?? undefined,
   population: row.city_ratings.population ?? undefined,
+  medianHousingPrice: row.city_ratings.medianHousingPrice ?? undefined,
 });
     }
   }
