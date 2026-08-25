@@ -20,7 +20,7 @@ export const updateCitySchema = createCitySchema.partial();
 export const upsertCityRatingSchema = z.object({
   year: z.number().int().min(2000).max(new Date().getFullYear() + 1),
 
-  rating: z.number().int().positive(),
+  rating: z.number().min(1).max(10),
 
   permitsIssued: z.number().int().nonnegative().optional(),
 
