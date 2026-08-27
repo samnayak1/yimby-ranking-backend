@@ -11,6 +11,11 @@
     "Minister",
     "MP",
     "Councillor",
+    "Representative",
+    "Assemblyman",
+    "Alderman",
+    "Councilmember",
+    "Board Of Supervisors",
     "Other"
   ],
   "politicalLeanings": [
