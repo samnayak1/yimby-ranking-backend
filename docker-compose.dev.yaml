@@ -44,6 +44,23 @@ services:
       litestream-restore:
         condition: service_completed_successfully
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    command:
+      - redis-server
+      - --maxmemory
+      - 48mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+    expose:
+      - "6379"
+
   backend:
     build:
       context: .
@@ -54,6 +71,9 @@ services:
 
     environment:
       NODE_ENV: development
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+
+      NODE_OPTIONS: --max-old-space-size=1024
 
     volumes:
       - sqlite_data_dev:/app/db
@@ -68,6 +88,8 @@ services:
     depends_on:
       litestream-restore:
         condition: service_completed_successfully
+      redis:
+        condition: service_started
 
 
 

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/server.js",
     "build": "tsc",
-    "dev": "ts-node src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "dev": "ts-node --transpile-only src/server.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -44,6 +45,9 @@
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
+    "ioredis": "^6.0.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "zod": "^4.4.3"
   }
 }

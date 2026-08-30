@@ -2,6 +2,7 @@ import { IPoliticianRepo } from '../repos/interfaces/IPoliticianRepo';
 import { NewPolitician, PaginatedResponse, PoliticianFilters, PoliticianWithRatings } from '../models';
 import {options} from './../config/config'
 import { createError } from '../utils/errorHelper';
+import { cached, invalidate } from '../cache/cache';
 
 
 const DESIGNATIONS = new Set(Object.values(options.designations));
@@ -12,7 +13,7 @@ export class PoliticianService {
 
 
   async getAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithRatings>> {
-    return this.repo.findAll(filters);
+    return cached('politicians', 'list', filters, () => this.repo.findAll(filters));
   }
 
   getById(id: number): PoliticianWithRatings {
@@ -30,10 +31,12 @@ export class PoliticianService {
 
     this.validate(data);
 
-    return this.repo.create({
+    const created = this.repo.create({
       ...data,
       name: data.name.trim(),
     });
+    this.refresh();
+    return created;
   }
 
   update(id: number, data: Partial<NewPolitician>): PoliticianWithRatings {
@@ -41,12 +44,15 @@ export class PoliticianService {
 
     this.validate(data);
 
-    return this.repo.update(id, data)!;
+    const updated = this.repo.update(id, data)!;
+    this.refresh();
+    return updated;
   }
 
   delete(id: number): void {
     this.getById(id);
     this.repo.delete(id);
+    this.refresh();
   }
 
   upsertRating(id: number, year: number, rating: number): PoliticianWithRatings {
@@ -60,15 +66,29 @@ export class PoliticianService {
       throw createError(400, 'Rating must be between 1 and 10');
     }
 
-    return this.repo.upsertRating(id, year, rating)!;
+    const saved = this.repo.upsertRating(id, year, rating)!;
+    this.refresh();
+    return saved;
   }
 
   async getDesignations(): Promise<string[]> {
-    return this.repo.getDesignations();
+    return cached('politicians', 'designations', null, () => this.repo.getDesignations());
   }
 
   async getPoliticalLeanings(): Promise<string[]> {
-    return this.repo.getPoliticalLeanings();
+    return cached('politicians', 'leanings', null, () => this.repo.getPoliticalLeanings());
+  }
+
+  /**
+   * The list shape the table requests unprompted, plus the filter dropdowns.
+   * Re-warmed after every write so the next reader hits.
+   */
+  private refresh(): void {
+    void invalidate('politicians', [
+      () => this.getAll({ page: 1, limit: 20 }),
+      () => this.getDesignations(),
+      () => this.getPoliticalLeanings(),
+    ]);
   }
 
   private validate(data: Partial<NewPolitician>): void {

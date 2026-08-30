@@ -2,12 +2,13 @@ import { ICityRepo } from '../repos/interfaces/ICityRepo';
 import { NewCity, CityFilters, PaginatedResponse, UpsertCityMetrics, CityWithRatings } from '../models/index';
 import { createError } from '../utils/errorHelper';
 import { CityMapPoint } from '../types';
+import { cached, invalidate } from '../cache/cache';
 
 export class CityService {
   constructor(private readonly repo: ICityRepo) { }
 
   async getAll(filters?: CityFilters): Promise<PaginatedResponse<CityWithRatings>> {
-    return this.repo.findAll(filters);
+    return cached('cities', 'list', filters, () => this.repo.findAll(filters));
   }
 
   getById(id: number): CityWithRatings {
@@ -29,7 +30,9 @@ export class CityService {
       throw createError(400, "Longitutse must be between -180 and 180");
     }
 
-    return this.repo.create({ ...data, name: data.name.trim(), countryCode: data.countryCode });
+    const created = this.repo.create({ ...data, name: data.name.trim(), countryCode: data.countryCode });
+    this.refresh();
+    return created;
   }
 
   update(id: number, data: Partial<NewCity>): CityWithRatings {
@@ -44,20 +47,33 @@ export class CityService {
      if (data.lng != null && (data.lng < -180 || data.lng > 180)) {
       throw createError(400, "Longitutse must be between -180 and 180");
     }
-    return this.repo.update(id, data)!;
+    const updated = this.repo.update(id, data)!;
+    this.refresh();
+    return updated;
   }
 
   delete(id: number): void {
     this.getById(id);
     this.repo.delete(id);
+    this.refresh();
   }
   
   async getCountries(): Promise<string[]> {
-    return this.repo.getCountries();
+    return cached('cities', 'countries', null, () => this.repo.getCountries());
   }
 
   async getRegions(): Promise<string[]> {
-    return this.repo.getRegions();
+    return cached('cities', 'regions', null, () => this.repo.getRegions());
+  }
+
+  //refresh cache after every write
+  private refresh(): void {
+    void invalidate('cities', [
+      () => this.getAll({ page: 1, limit: 20, sortBy: 'name', sortOrder: 'asc' }),
+      () => this.getAll({ page: 1, limit: 100, sortBy: 'name', sortOrder: 'asc' }),
+      () => this.getCountries(),
+      () => this.getRegions(),
+    ]);
   }
 
   
@@ -141,7 +157,9 @@ export class CityService {
     );
   }
 
-  return this.repo.upsertMetrics(id, metrics)!;
+  const saved = this.repo.upsertMetrics(id, metrics)!;
+  this.refresh();
+  return saved;
 }
 
 
