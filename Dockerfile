@@ -7,7 +7,7 @@ COPY package*.json ./
 
 RUN npm ci
 
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 
 ENV NODE_OPTIONS=--max-old-space-size=512

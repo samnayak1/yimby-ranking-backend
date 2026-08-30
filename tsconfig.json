@@ -2,12 +2,14 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "jest"],
+    "noEmit": true
   },
-  "include": ["src/**/*", "src/jobs/backup-database.js"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*", "src/jobs/backup-database.js", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
