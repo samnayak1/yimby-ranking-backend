@@ -58,3 +58,6 @@ __pycache__/
 
 
 */data
+
+# Caddy access logs, bind-mounted from the caddy container.
+logs/

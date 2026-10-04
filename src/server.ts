@@ -14,6 +14,9 @@ import { cityRoutes } from "./routes/cityRoutes";
 import { userRoutes } from "./routes/userRoutes";
 import { politicianRoutes } from "./routes/politicianRoutes";
 import { healthRoutes } from "./routes/healthRoutes";
+import { contactRoutes } from "./routes/contactRoutes";
+import { ContactController } from "./controllers/ContactController";
+import { ContactService, telegramSender } from "./services/ContactService";
 import { backupJob } from "./jobs/db-cron";
 import { logger } from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
@@ -61,6 +64,17 @@ const cityService = new CityService(cityRepo);
 app.use("/api/politicians", politicianRoutes(new PoliticianController(politicianService)));
 app.use("/api/cities", cityRoutes(new CityController(cityService)));
 app.use("/api/users", userRoutes(new UserController()));
+
+const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+const contactService =
+  telegramToken && telegramChatId
+    ? new ContactService(telegramSender(telegramToken, telegramChatId))
+    : null;
+if (!contactService) {
+  logger.warn("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — contact form disabled");
+}
+app.use("/api/contact", contactRoutes(new ContactController(contactService)));
 
 app.use(healthRoutes(provider));
 
