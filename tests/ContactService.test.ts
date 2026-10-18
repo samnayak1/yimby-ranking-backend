@@ -1,30 +1,33 @@
 import { ContactService, telegramSender } from '../src/services/ContactService';
 
 describe('ContactService', () => {
-  it('formats the message with the reply-to line', async () => {
+  const msg = { name: 'Sam', email: 'sam@example.com', ip: '203.0.113.7', message: 'Hello there' };
+
+  it('formats the message exactly as the chat expects', async () => {
     const send = jest.fn().mockResolvedValue(undefined);
-    await new ContactService(send).submit({ message: 'Hello there', contact: '@sam' });
+    await new ContactService(send).submit(msg);
+
+    expect(send).toHaveBeenCalledWith(
+      'New message from yimby-tracker\n' +
+      'From: Sam <sam@example.com>\n' +
+      'IP: 203.0.113.7\n' +
+      '\n' +
+      'Hello there',
+    );
+  });
+
+  it("keeps the whole payload within Telegram's 4,096-character limit", async () => {
+    const send = jest.fn().mockResolvedValue(undefined);
+    await new ContactService(send).submit({ ...msg, message: 'x'.repeat(10_000) });
 
     const text = send.mock.calls[0][0] as string;
-    expect(text).toContain('Reply to: @sam');
-    expect(text.endsWith('Hello there')).toBe(true);
-  });
-
-  it('marks a missing contact', async () => {
-    const send = jest.fn().mockResolvedValue(undefined);
-    await new ContactService(send).submit({ message: 'Hello there' });
-    expect(send.mock.calls[0][0]).toContain('Reply to: (not given)');
-  });
-
-  it('keeps the whole payload within Telegram\'s 4,096-character limit', async () => {
-    const send = jest.fn().mockResolvedValue(undefined);
-    await new ContactService(send).submit({ message: 'x'.repeat(10_000) });
-    expect((send.mock.calls[0][0] as string).length).toBeLessThanOrEqual(4096);
+    expect(text.length).toBeLessThanOrEqual(4096);
+    expect(text.startsWith('New message from yimby-tracker\nFrom: Sam')).toBe(true);
   });
 
   it('propagates send failures', async () => {
     const send = jest.fn().mockRejectedValue(new Error('down'));
-    await expect(new ContactService(send).submit({ message: 'Hello there' })).rejects.toThrow('down');
+    await expect(new ContactService(send).submit(msg)).rejects.toThrow('down');
   });
 });
 

@@ -14,7 +14,7 @@ export class ContactController {
     try {
       if (!this.service) throw createError(503, 'Contact form is unavailable right now');
 
-      const { message, contact, website } = req.body;
+      const { name, email, message, website } = req.body;
 
       if (website) {
         req.log?.warn('Contact honeypot filled — dropped');
@@ -22,7 +22,7 @@ export class ContactController {
         return;
       }
 
-      await this.service.submit({ message, contact });
+      await this.service.submit({ name, email, message, ip: req.ip ?? 'unknown' });
       res.status(202).json({ ok: true });
     } catch (err) {
       next(err);

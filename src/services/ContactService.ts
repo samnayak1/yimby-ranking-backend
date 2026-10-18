@@ -6,17 +6,21 @@ export type Sender = (text: string) => Promise<void>;
 const TELEGRAM_MAX = 4096;
 
 export interface ContactMessage {
+  name: string;
+  email: string;
+  ip: string;
   message: string;
-  contact?: string;
 }
 
 export class ContactService {
   constructor(private readonly send: Sender) {}
 
-  async submit({ message, contact }: ContactMessage): Promise<void> {
+  async submit({ name, email, ip, message }: ContactMessage): Promise<void> {
     const header = [
-      '📬 New message from YIMBY Tracker',
-      `Reply to: ${contact?.trim() || '(not given)'}`,
+      'New message from yimby-tracker',
+      `From: ${name} <${email}>`,
+      `IP: ${ip}`,
+      '',
       '',
     ].join('\n');
 

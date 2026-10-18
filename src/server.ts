@@ -24,6 +24,10 @@ import { quitCache } from "./cache/cacheClient";
 
 const app = express();
 
+// Caddy (prod) and nginx (dev) sit one hop in front and set X-Forwarded-For.
+// Without this, req.ip is the proxy container's address, not the visitor's.
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
