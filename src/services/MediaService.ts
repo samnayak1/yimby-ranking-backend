@@ -1,4 +1,4 @@
-import { Creator, Resource, ResourceCategory } from '../models';
+import { Creator, CreatorPlatform, Resource, ResourceCategory } from '../models';
 import { ICreatorRepo, IResourceRepo } from '../repos/interfaces/IMediaRepos';
 import {
   CreateCreatorDto, CreateResourceDto, UpdateCreatorDto, UpdateResourceDto,
@@ -6,7 +6,29 @@ import {
 import { createError } from '../utils/errorHelper';
 import { cached, invalidate } from '../cache/cache';
 
-const LINK_FIELDS = ['instagramUrl', 'youtubeUrl', 'twitterUrl', 'blueskyUrl', 'websiteUrl'] as const;
+// The hosts each platform's links live on. "website" accepts any domain.
+const PLATFORM_HOSTS: Record<Exclude<CreatorPlatform, 'website'>, string[]> = {
+  youtube:   ['youtube.com', 'youtu.be'],
+  x:         ['x.com', 'twitter.com'],
+  instagram: ['instagram.com'],
+  bluesky:   ['bsky.app'],
+};
+
+const PLATFORM_NAMES: Record<Exclude<CreatorPlatform, 'website'>, string> = {
+  youtube: 'YouTube', x: 'X', instagram: 'Instagram', bluesky: 'Bluesky',
+};
+
+/** True when the link belongs to the platform (subdomains such as m.youtube.com count). */
+export function urlMatchesPlatform(platform: CreatorPlatform, url: string): boolean {
+  if (platform === 'website') return true;
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return PLATFORM_HOSTS[platform].some(h => host === h || host.endsWith(`.${h}`));
+}
 
 export class CreatorService {
   constructor(private readonly repo: ICreatorRepo) {}
@@ -22,7 +44,7 @@ export class CreatorService {
   }
 
   create(data: CreateCreatorDto): Creator {
-    this.requireALink(data);
+    this.requireMatchingUrl(data.platform, data.url);
     const created = this.repo.create(data);
     this.refresh();
     return created;
@@ -30,9 +52,10 @@ export class CreatorService {
 
   update(id: number, data: UpdateCreatorDto): Creator {
     const existing = this.getById(id);
-    // Checked against the merged record: a PATCH that clears the only link must
-    // fail even though the payload on its own looks fine.
-    this.requireALink({ ...existing, ...data });
+    // Checked against the merged record: changing only the platform, or only the
+    // link, must still leave the two agreeing.
+    const merged = { ...existing, ...data };
+    this.requireMatchingUrl(merged.platform, merged.url);
     const updated = this.repo.update(id, data)!;
     this.refresh();
     return updated;
@@ -44,9 +67,10 @@ export class CreatorService {
     this.refresh();
   }
 
-  private requireALink(c: Partial<Record<(typeof LINK_FIELDS)[number], string | null | undefined>>): void {
-    if (!LINK_FIELDS.some(f => c[f])) {
-      throw createError(400, 'Add at least one link (Instagram, YouTube, X, Bluesky or website)');
+  private requireMatchingUrl(platform: CreatorPlatform, url: string): void {
+    if (!urlMatchesPlatform(platform, url)) {
+      const name = PLATFORM_NAMES[platform as Exclude<CreatorPlatform, 'website'>];
+      throw createError(400, `That link isn't a ${name} link. Check the platform or the URL.`);
     }
   }
 

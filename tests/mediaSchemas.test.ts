@@ -24,17 +24,49 @@ describe('media schemas', () => {
       expect(createResourceSchema.safeParse({ category: 'website', title: 'X', url }).success).toBe(true);
     });
 
-    it('rejects a dangerous URL in an optional creator link too', () => {
-      const r = createCreatorSchema.safeParse({ name: 'X', youtubeUrl: 'javascript:alert(1)' });
+    it('rejects a dangerous URL for a creator too', () => {
+      const r = createCreatorSchema.safeParse({ name: 'X', platform: 'website', url: 'javascript:alert(1)' });
       expect(r.success).toBe(false);
     });
   });
 
   it('turns a cleared optional field into null, and leaves an absent one undefined', () => {
-    const r = updateCreatorSchema.parse({ youtubeUrl: '  ', description: '' });
-    expect(r.youtubeUrl).toBeNull();
+    const r = updateCreatorSchema.parse({ description: '' });
     expect(r.description).toBeNull();
-    expect('twitterUrl' in r ? r.twitterUrl : undefined).toBeUndefined();
+    expect(r.url).toBeUndefined();
+  });
+
+  describe('creator tags', () => {
+    const base = { name: 'X', platform: 'youtube' as const, url: 'https://youtube.com/@x' };
+
+    it('accepts known tags and collapses duplicates', () => {
+      expect(createCreatorSchema.parse({ ...base, tags: ['transit', 'econ', 'transit'] }).tags)
+        .toEqual(['transit', 'econ']);
+    });
+
+    it('rejects an unknown tag', () => {
+      expect(createCreatorSchema.safeParse({ ...base, tags: ['cooking'] }).success).toBe(false);
+    });
+
+    it.each([
+      ['us', 'US'],
+      [' gb ', 'GB'],
+      ['', null],
+    ])('normalises nationality %p to %p', (input, expected) => {
+      expect(createCreatorSchema.parse({ ...base, nationalityCode: input }).nationalityCode).toBe(expected);
+    });
+
+    it('leaves nationality out when not given', () => {
+      expect(createCreatorSchema.parse(base).nationalityCode).toBeUndefined();
+    });
+
+    it.each(['USA', 'U', '1A', 'U$'])('rejects nationality %p', nationalityCode => {
+      expect(createCreatorSchema.safeParse({ ...base, nationalityCode }).success).toBe(false);
+    });
+
+    it('requires a platform from the list', () => {
+      expect(createCreatorSchema.safeParse({ ...base, platform: 'myspace' }).success).toBe(false);
+    });
   });
 
   it.each(['2024', '2024-03', '2024-03-15', ''])('accepts publishedOn %p', publishedOn => {

@@ -1,0 +1,1 @@
+ALTER TABLE `creators` ADD `nationality_code` text;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RESOURCE_CATEGORIES } from '../models/media.models';
+import { CREATOR_PLATFORMS, CREATOR_TAGS, RESOURCE_CATEGORIES } from '../models/media.models';
 
 /**
  * Every URL here is rendered as a clickable link for all visitors, so only
@@ -23,8 +23,6 @@ const httpUrl = z
 // while a missing key still means "leave unchanged" on a PATCH.
 const blankToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
-const optionalUrl = z.preprocess(blankToNull, httpUrl.nullable().optional());
-
 const optionalText = (max: number) =>
   z.preprocess(blankToNull, z.string().trim().max(max, `Must be ${max} characters or fewer`).nullable().optional());
 
@@ -33,11 +31,18 @@ const sortOrder = z.number().int().min(-1000).max(1000).optional();
 export const createCreatorSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(120, 'Name is too long'),
   description: optionalText(500),
-  instagramUrl: optionalUrl,
-  youtubeUrl: optionalUrl,
-  twitterUrl: optionalUrl,
-  blueskyUrl: optionalUrl,
-  websiteUrl: optionalUrl,
+  platform: z.enum(CREATOR_PLATFORMS),
+  url: httpUrl,
+  // Duplicates collapse rather than fail: picking a tag twice isn't an error.
+  tags: z
+    .array(z.enum(CREATOR_TAGS))
+    .transform(tags => [...new Set(tags)])
+    .optional(),
+  // Optional. Two-letter ISO country code; lower case is accepted and normalised.
+  nationalityCode: z.preprocess(
+    v => (typeof v === 'string' ? (v.trim() === '' ? null : v.trim().toUpperCase()) : v),
+    z.string().regex(/^[A-Z]{2}$/, 'Use a two-letter country code, e.g. US').nullable().optional(),
+  ),
   sortOrder,
 });
 

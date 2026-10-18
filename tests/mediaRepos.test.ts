@@ -19,6 +19,9 @@ describe('CreatorService on SQLite', () => {
   let provider: SQLiteProvider;
   let svc: CreatorService;
 
+  const yt = (name: string, extra = {}) =>
+    ({ name, platform: 'youtube' as const, url: `https://youtube.com/@${name.replace(/\s/g, '')}`, ...extra });
+
   beforeEach(() => {
     provider = freshDb();
     svc = new CreatorService(new SQLiteCreatorRepo(provider));
@@ -26,31 +29,64 @@ describe('CreatorService on SQLite', () => {
   afterEach(() => provider.close());
 
   it('creates and lists creators ordered by sortOrder, then name', async () => {
-    svc.create({ name: 'Zed', youtubeUrl: 'https://youtube.com/@zed' });
-    svc.create({ name: 'Amy', youtubeUrl: 'https://youtube.com/@amy' });
-    svc.create({ name: 'Pinned', youtubeUrl: 'https://youtube.com/@p', sortOrder: -1 });
+    svc.create(yt('Zed'));
+    svc.create(yt('Amy'));
+    svc.create(yt('Pinned', { sortOrder: -1 }));
 
     expect((await svc.getAll()).map(c => c.name)).toEqual(['Pinned', 'Amy', 'Zed']);
   });
 
-  it('requires at least one link', async () => {
-    expect(await status(() => svc.create({ name: 'Nobody' }))).toBe(400);
+  it('stores tags as an array and defaults to none', async () => {
+    svc.create(yt('Tagged', { tags: ['transit', 'econ'] }));
+    svc.create(yt('Plain'));
+
+    const byName = Object.fromEntries((await svc.getAll()).map(c => [c.name, c.tags]));
+    expect(byName).toEqual({ Tagged: ['transit', 'econ'], Plain: [] });
   });
 
-  it('refuses an update that clears the only link', async () => {
-    const c = svc.create({ name: 'Solo', twitterUrl: 'https://x.com/solo' });
-    expect(await status(() => svc.update(c.id, { twitterUrl: null }))).toBe(400);
+  it('stores an optional nationality', async () => {
+    svc.create(yt('Canuck', { nationalityCode: 'CA' }));
+    svc.create(yt('Unknown'));
+
+    const byName = Object.fromEntries((await svc.getAll()).map(c => [c.name, c.nationalityCode]));
+    expect(byName).toEqual({ Canuck: 'CA', Unknown: null });
   });
 
-  it('allows swapping one link for another', () => {
-    const c = svc.create({ name: 'Swap', twitterUrl: 'https://x.com/swap' });
-    const u = svc.update(c.id, { twitterUrl: null, blueskyUrl: 'https://bsky.app/profile/swap.bsky.social' });
-    expect(u.twitterUrl).toBeNull();
-    expect(u.blueskyUrl).toBe('https://bsky.app/profile/swap.bsky.social');
+  it('rejects a link from a different platform', async () => {
+    expect(await status(() => svc.create({ name: 'Mismatch', platform: 'youtube', url: 'https://x.com/someone' }))).toBe(400);
+  });
+
+  it.each([
+    ['youtube', 'https://www.youtube.com/@OhTheUrbanity'],
+    ['youtube', 'https://m.youtube.com/@OhTheUrbanity'],
+    ['youtube', 'https://youtu.be/abc123'],
+    ['x', 'https://x.com/sam_d_1995'],
+    ['x', 'https://twitter.com/sam_d_1995'],
+    ['instagram', 'https://www.instagram.com/someone'],
+    ['bluesky', 'https://bsky.app/profile/someone.bsky.social'],
+    ['website', 'https://anything.example.org'],
+  ] as const)('accepts a %s link: %s', (platform, url) => {
+    expect(() => svc.create({ name: 'Ok', platform, url })).not.toThrow();
+  });
+
+  it('does not accept a look-alike domain', async () => {
+    expect(await status(() => svc.create({ name: 'Fake', platform: 'x', url: 'https://notx.com/a' }))).toBe(400);
+    expect(await status(() => svc.create({ name: 'Fake', platform: 'youtube', url: 'https://youtube.com.evil.net/a' }))).toBe(400);
+  });
+
+  it('checks the merged record on update', async () => {
+    const c = svc.create({ name: 'Swap', platform: 'x', url: 'https://x.com/swap' });
+
+    // Changing only the platform would leave an X link on a YouTube card.
+    expect(await status(() => svc.update(c.id, { platform: 'youtube' }))).toBe(400);
+
+    // Changing both together is fine.
+    const u = svc.update(c.id, { platform: 'bluesky', url: 'https://bsky.app/profile/swap.bsky.social' });
+    expect(u).toMatchObject({ platform: 'bluesky', url: 'https://bsky.app/profile/swap.bsky.social' });
   });
 
   it('deletes, and 404s on unknown ids', async () => {
-    const c = svc.create({ name: 'Gone', websiteUrl: 'https://gone.example.com' });
+    const c = svc.create({ name: 'Gone', platform: 'website', url: 'https://gone.example.com' });
     svc.delete(c.id);
     expect(await svc.getAll()).toEqual([]);
     expect(await status(() => svc.delete(c.id))).toBe(404);

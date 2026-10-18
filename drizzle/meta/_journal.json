@@ -64,6 +64,20 @@
       "when": 1792305908757,
       "tag": "0008_shiny_terrax",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792309855672,
+      "tag": "0009_creator_single_platform",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1792310225209,
+      "tag": "0010_creator_nationality",
+      "breakpoints": true
     }
   ]
 }
