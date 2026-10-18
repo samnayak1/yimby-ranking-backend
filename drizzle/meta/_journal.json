@@ -50,6 +50,20 @@
       "when": 1787583203919,
       "tag": "0006_tense_nightcrawler",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792304589771,
+      "tag": "0007_mute_kabuki",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792305908757,
+      "tag": "0008_shiny_terrax",
+      "breakpoints": true
     }
   ]
 }

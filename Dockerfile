@@ -1,5 +1,5 @@
 # ---- build: needs devDependencies (typescript) ----
-FROM node:22 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN npm run build
 
 
 # ---- runtime: production deps only ----
-FROM node:22 AS runtime
+FROM node:24 AS runtime
 
 WORKDIR /app
 

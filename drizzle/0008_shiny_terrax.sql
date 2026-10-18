@@ -1,0 +1,1 @@
+ALTER TABLE `city_ratings` ADD `vacancy_rate` real;

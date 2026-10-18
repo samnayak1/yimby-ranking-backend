@@ -1,10 +1,12 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { politicianRatings, politicians } from "./politicians.models";
 import { cities, cityRatings } from "./cities.models";
+import { creators, resources } from "./media.models";
 import { PaginationParams } from "../types";
 import { PoliticianStatus } from "../types/enums";
 export * from './cities.models'
 export * from './politicians.models'
+export * from './media.models'
 
 export type Politician       = InferSelectModel<typeof politicians>;
 export type NewPolitician    = InferInsertModel<typeof politicians>;
@@ -15,6 +17,11 @@ export type City          = InferSelectModel<typeof cities>;
 export type NewCity       = InferInsertModel<typeof cities>;
 export type CityRating    = InferSelectModel<typeof cityRatings>;
 export type NewCityRating = InferInsertModel<typeof cityRatings>;
+
+export type Creator     = InferSelectModel<typeof creators>;
+export type NewCreator  = InferInsertModel<typeof creators>;
+export type Resource    = InferSelectModel<typeof resources>;
+export type NewResource = InferInsertModel<typeof resources>;
  
 
  
@@ -31,6 +38,7 @@ export interface UpsertCityMetrics {
   averagePermitDays?: number;
   population?: number;
   medianHousingPrice?: number;
+  vacancyRate?: number;
 }
  
 export type PoliticianWithRatings = Politician & { ratings: Rating[] };

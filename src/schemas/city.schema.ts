@@ -35,6 +35,9 @@ export const upsertCityRatingSchema = z.object({
   population: z.number().int().positive().optional(),
 
   medianHousingPrice: z.number().nonnegative().optional(),
+
+  // Percentage, 0–100.
+  vacancyRate: z.number().min(0, 'Vacancy rate cannot be negative').max(100, 'Vacancy rate is a percentage (0–100)').optional(),
 });
 
 export const getCitiesQuerySchema = z.object({

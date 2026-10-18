@@ -157,6 +157,13 @@ export class CityService {
     );
   }
 
+  if (
+    metrics.vacancyRate != null &&
+    (metrics.vacancyRate < 0 || metrics.vacancyRate > 100)
+  ) {
+    throw createError(400, "Vacancy rate must be a percentage between 0 and 100");
+  }
+
   const saved = this.repo.upsertMetrics(id, metrics)!;
   this.refresh();
   return saved;

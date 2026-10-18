@@ -138,6 +138,20 @@ describe('CityService', () => {
       );
     });
 
+    it.each([[-0.1], [100.1]])('rejects a vacancy rate of %p with a 400', async vacancyRate => {
+      await expectStatus(
+        () => new CityService(makeRepo()).upsertMetrics(1, { ...valid, vacancyRate }),
+        400,
+        /vacancy/i,
+      );
+    });
+
+    it.each([[0], [5.2], [100]])('accepts a vacancy rate of %p', vacancyRate => {
+      const repo = makeRepo();
+      new CityService(repo).upsertMetrics(1, { ...valid, vacancyRate });
+      expect(repo.upsertMetrics).toHaveBeenCalledWith(1, expect.objectContaining({ vacancyRate }));
+    });
+
     it('rejects a rating above 10', async () => {
       await expectStatus(
         () => new CityService(makeRepo()).upsertMetrics(1, { ...valid, rating: 11 }),

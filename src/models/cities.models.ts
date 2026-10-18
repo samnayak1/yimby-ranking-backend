@@ -55,6 +55,9 @@ export const cityRatings = sqliteTable("city_ratings", {
   // Median dwelling price for THAT year.
   medianHousingPrice: real("median_housing_price"),
 
+  // Rental vacancy rate for THAT year, as a percentage (5.2 means 5.2%).
+  vacancyRate: real("vacancy_rate"),
+
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 }, (t) => [
   unique("uq_city_year").on(t.cityId, t.year),

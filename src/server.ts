@@ -15,6 +15,10 @@ import { userRoutes } from "./routes/userRoutes";
 import { politicianRoutes } from "./routes/politicianRoutes";
 import { healthRoutes } from "./routes/healthRoutes";
 import { contactRoutes } from "./routes/contactRoutes";
+import { creatorRoutes, resourceRoutes } from "./routes/mediaRoutes";
+import { CreatorController, ResourceController } from "./controllers/MediaController";
+import { CreatorService, ResourceService } from "./services/MediaService";
+import { SQLiteCreatorRepo, SQLiteResourceRepo } from "./repos/sqliteMediaRepos";
 import { ContactController } from "./controllers/ContactController";
 import { ContactService, telegramSender } from "./services/ContactService";
 import { backupJob } from "./jobs/db-cron";
@@ -68,6 +72,9 @@ const cityService = new CityService(cityRepo);
 app.use("/api/politicians", politicianRoutes(new PoliticianController(politicianService)));
 app.use("/api/cities", cityRoutes(new CityController(cityService)));
 app.use("/api/users", userRoutes(new UserController()));
+
+app.use("/api/creators", creatorRoutes(new CreatorController(new CreatorService(new SQLiteCreatorRepo(provider)))));
+app.use("/api/resources", resourceRoutes(new ResourceController(new ResourceService(new SQLiteResourceRepo(provider)))));
 
 const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramChatId = process.env.TELEGRAM_CHAT_ID;
