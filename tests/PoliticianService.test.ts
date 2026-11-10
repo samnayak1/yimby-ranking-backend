@@ -12,7 +12,6 @@ function makeRepo(over: Partial<IPoliticianRepo> = {}): jest.Mocked<IPoliticianR
     delete:              jest.fn().mockReturnValue(true),
     getDesignations:     jest.fn().mockResolvedValue(['Mayor']),
     getPoliticalLeanings: jest.fn().mockResolvedValue(['Liberal']),
-    upsertRating:        jest.fn().mockReturnValue(aPolitician()),
     ...over,
   } as jest.Mocked<IPoliticianRepo>;
 }
@@ -121,29 +120,6 @@ describe('PoliticianService', () => {
       const repo = makeRepo({ findById: jest.fn().mockReturnValue(null) });
       await expectStatus(() => new PoliticianService(repo).delete(99), 404);
       expect(repo.delete).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('upsertRating', () => {
-    it.each([
-      ['a year before 2000', 1999, 5, /year/i],
-      ['a year beyond next year', new Date().getFullYear() + 2, 5, /year/i],
-      ['a rating below 1', 2026, 0, /rating/i],
-      ['a rating above 10', 2026, 11, /rating/i],
-    ])('rejects %s with a 400', async (_label, year, rating, message) => {
-      const repo = makeRepo();
-      await expectStatus(
-        () => new PoliticianService(repo).upsertRating(1, year as number, rating as number),
-        400,
-        message as RegExp,
-      );
-      expect(repo.upsertRating).not.toHaveBeenCalled();
-    });
-
-    it.each([[1], [10]])('accepts the boundary rating %i', rating => {
-      const repo = makeRepo();
-      expect(() => new PoliticianService(repo).upsertRating(1, 2026, rating)).not.toThrow();
-      expect(repo.upsertRating).toHaveBeenCalledWith(1, 2026, rating);
     });
   });
 });

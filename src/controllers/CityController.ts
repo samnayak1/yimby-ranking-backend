@@ -3,7 +3,7 @@ import { CityService } from '../services/CityService';
 import {
   CreateCityDto,
   UpdateCityDto,
-  UpsertCityRatingDto,
+  UpsertCityMetricsDto,
 } from '../schemas/city.schema';
 import { CityFilters } from '../models';
 
@@ -23,8 +23,6 @@ export class CityController {
         region,
         minPrice,
         maxPrice,
-        minScore,
-        maxScore,
       } = req.query;
 
       const filters: CityFilters = {
@@ -37,8 +35,6 @@ export class CityController {
         region: region as string,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
-        minScore: minScore ? Number(minScore) : undefined,
-        maxScore: maxScore ? Number(maxScore) : undefined,
       };
 
       const result = await this.service.getAll(filters);
@@ -112,7 +108,7 @@ export class CityController {
   };
 
   upsertMetrics = (
-    req: Request<{ id: string }, {}, UpsertCityRatingDto>,
+    req: Request<{ id: string }, {}, UpsertCityMetricsDto>,
     res: Response,
     next: NextFunction,
   ): void => {

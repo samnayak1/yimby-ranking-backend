@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { PoliticianController } from '../controllers/PoliticianController';
 import { authMiddleware, requireAdmin } from '../middleware/cognitoAuth';
 import { validate, validateQuery } from '../middleware/typeValidators';
-import { createPoliticianSchema, getPoliticiansQuerySchema, updatePoliticianSchema, upsertPoliticianRatingSchema } from '../schemas/politician.schemas';
+import { createPoliticianSchema, getPoliticiansQuerySchema, updatePoliticianSchema } from '../schemas/politician.schemas';
 
 
 
@@ -26,9 +26,6 @@ export function politicianRoutes(controller: PoliticianController): Router {
     controller.delete
   );
 
-  router.put('/:id/ratings', authMiddleware, requireAdmin, validate(upsertPoliticianRatingSchema),
-    controller.upsertRating
-  );
 
 
 

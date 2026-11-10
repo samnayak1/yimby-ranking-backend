@@ -7,7 +7,7 @@ import { CREATOR_PLATFORMS, CREATOR_TAGS, RESOURCE_CATEGORIES } from '../models/
  * `data:` — would let whoever controls an admin token run script in visitors'
  * browsers.
  */
-const httpUrl = z
+export const httpUrl = z
   .string()
   .trim()
   .max(500, 'URL is too long')
@@ -21,7 +21,7 @@ const httpUrl = z
 
 // Forms send "" for a cleared field. Treat that as "remove the value" (null),
 // while a missing key still means "leave unchanged" on a PATCH.
-const blankToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
+export const blankToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
 
 const optionalText = (max: number) =>
   z.preprocess(blankToNull, z.string().trim().max(max, `Must be ${max} characters or fewer`).nullable().optional());

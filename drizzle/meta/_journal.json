@@ -78,6 +78,20 @@
       "when": 1792310225209,
       "tag": "0010_creator_nationality",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1794294962254,
+      "tag": "0011_politician_color_and_items",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794295031410,
+      "tag": "0012_remove_ratings",
+      "breakpoints": true
     }
   ]
 }

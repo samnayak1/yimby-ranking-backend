@@ -90,13 +90,6 @@ export class CityService {
     throw Object.assign(new Error("Invalid year"), { status: 400 });
   }
 
-  if (metrics.rating && (metrics.rating < 1 || metrics.rating > 10 )) {
-    throw Object.assign(
-      new Error("rating score must be between 1 and 10"),
-      { status: 400 }
-    );
-  }
-
   if (
     metrics.averagePermitDays != null &&
     metrics.averagePermitDays < 0

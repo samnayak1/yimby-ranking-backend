@@ -3,7 +3,6 @@ import { PoliticianService } from '../services/PoliticianService';
 import {
   CreatePoliticianDto,
   UpdatePoliticianDto,
-  UpsertPoliticianRatingDto,
 } from '../schemas/politician.schemas';
 import { PoliticianFilters } from '../models';
 import { PoliticianStatus } from '../types/enums';
@@ -23,8 +22,6 @@ export class PoliticianController {
         politicalLeaning,
         nationalityCode,
         status,
-        minScore,
-        maxScore,
         cityId,
       } = req.query;
 
@@ -38,8 +35,6 @@ export class PoliticianController {
         politicalLeaning: politicalLeaning as string,
         nationalityCode: nationalityCode as string,
         status: status as PoliticianStatus,
-        minScore: minScore ? Number(minScore) : undefined,
-        maxScore: maxScore ? Number(maxScore) : undefined,
         cityId: cityId ? Number(cityId) : undefined,
       };
 
@@ -99,16 +94,5 @@ export class PoliticianController {
       console.error('Error in getFilterOptions:', err);
       next(err);
     }
-  };
-  
-
-  upsertRating = (req: Request<{ id: string }, {}, UpsertPoliticianRatingDto>, res: Response, next: NextFunction): void => {
-    try {
-      const { year, rating } = req.body;
-      const data = this.service.upsertRating(Number(req.params.id), year, rating);
-      res.json({ data });
-    } catch (err) { 
-      console.error('Error in upsertRating:', err);
-      next(err); }
   };
 }

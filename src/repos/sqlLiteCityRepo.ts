@@ -1,11 +1,20 @@
-import { and, count, eq, gte, isNotNull, like, lte, or, sql } from 'drizzle-orm';
-import { CityFilters ,CityRating,CityWithRatings,NewCity, UpsertCityMetrics } from '../models';
+import { and, asc, count, desc, eq, gte, isNotNull, like, lte, or, sql, type SQL } from 'drizzle-orm';
+import { CityFilters ,CityWithRatings,NewCity, UpsertCityMetrics } from '../models';
 import { cities, cityRatings, } from '../models/cities.models';
 import { DbProvider, DrizzleDb } from './client';
 import { ICityRepo } from './interfaces/ICityRepo';
 import { CityMapPoint } from '../types';
 
 
+
+// A city's headline figure: permits per 1,000 residents from the most recent
+// year that has one. Plain SQL with its own alias, because the relational query
+// builder re-qualifies interpolated columns with the outer table's name.
+const LATEST_PERMITS_PER_1000 = sql.raw(`(
+  SELECT cr.permits_per_1000_residents FROM city_ratings cr
+  WHERE cr.city_id = "cities"."id" AND cr.permits_per_1000_residents IS NOT NULL
+  ORDER BY cr.year DESC LIMIT 1
+)`);
 
 export class SQLiteCityRepo implements ICityRepo{
   private readonly db: DrizzleDb;
@@ -26,8 +35,6 @@ export class SQLiteCityRepo implements ICityRepo{
     region,
     minPrice,
     maxPrice,
-    minScore,
-    maxScore
   } = filters || {};
 
   const conditions = [];
@@ -56,13 +63,6 @@ export class SQLiteCityRepo implements ICityRepo{
   if (maxPrice !== undefined) {
     conditions.push(lte(cities.medianHousePrice, maxPrice));
   }
-  if (minScore !== undefined) {
-  conditions.push(gte(cities.rating, minScore));
-}
-
-if (maxScore !== undefined) {
-  conditions.push(lte(cities.rating, maxScore));
-}
 
   const whereClause =
     conditions.length > 0 ? and(...conditions) : undefined;
@@ -76,16 +76,21 @@ if (maxScore !== undefined) {
 
   const offset = (page - 1) * limit;
 
-  const orderColumn =
-  sortBy === "countryCode"
-    ? cities.countryCode
-    : sortBy === "region"
-    ? cities.region
-    : sortBy === "medianHousePrice"
-    ? cities.medianHousePrice
-    : sortBy === "rating"
-    ? cities.rating
-    : cities.name;
+  const dir = sortOrder === "desc" ? desc : asc;
+
+  const orderBy: SQL[] =
+    sortBy === "permitsPer1000Residents"
+      // Cities with no permit figure go last in either direction.
+      ? [sql`${LATEST_PERMITS_PER_1000} IS NULL`, dir(LATEST_PERMITS_PER_1000), asc(cities.name)]
+      : [dir(
+          sortBy === "countryCode"
+            ? cities.countryCode
+            : sortBy === "region"
+            ? cities.region
+            : sortBy === "medianHousePrice"
+            ? cities.medianHousePrice
+            : cities.name,
+        )];
 
   const citiesResult = await this.db.query.cities.findMany({
     where: whereClause,
@@ -94,10 +99,7 @@ if (maxScore !== undefined) {
         orderBy: (ratings, { desc }) => [desc(ratings.year)],
       },
     },
-    orderBy:
-      sortOrder === "desc"
-        ? (_, { desc }) => [desc(orderColumn)]
-        : (_, { asc }) => [asc(orderColumn)],
+    orderBy,
     limit,
     offset,
   });
@@ -106,7 +108,6 @@ const data = citiesResult.map(city => ({
   ...city,
   ratings: city.ratings.map(r => ({
     ...r,
-    rating: r.rating ?? undefined,
     permitsIssued: r.permitsIssued ?? undefined,
     permitsPer1000Residents: r.permitsPer1000Residents ?? undefined,
     housingStarts: r.housingStarts ?? undefined,
@@ -140,7 +141,7 @@ findMapData(): CityMapPoint[] {
       region:  cities.region,
       lat:     cities.lat,
       lng:     cities.lng,
-      rating:  cities.rating,
+      permitsPer1000Residents: sql<number | null>`${LATEST_PERMITS_PER_1000}`,
       medianHousePrice: cities.medianHousePrice,
       currency: cities.currency,
       notes:   cities.notes,
@@ -266,7 +267,6 @@ private groupRating(
       map.get(city.id)!.ratings.push({
   year: row.city_ratings.year,
   permitsIssued: row.city_ratings.permitsIssued ?? undefined,
-  rating: row.city_ratings.rating ?? undefined,
   permitsPer1000Residents:
     row.city_ratings.permitsPer1000Residents ?? undefined,
   housingStarts: row.city_ratings.housingStarts ?? undefined,

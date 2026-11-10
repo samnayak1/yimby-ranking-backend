@@ -1,5 +1,5 @@
 import { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { politicianRatings, politicians } from "./politicians.models";
+import { politicianItems, politicians } from "./politicians.models";
 import { cities, cityRatings } from "./cities.models";
 import { creators, resources } from "./media.models";
 import { PaginationParams } from "../types";
@@ -10,8 +10,7 @@ export * from './media.models'
 
 export type Politician       = InferSelectModel<typeof politicians>;
 export type NewPolitician    = InferInsertModel<typeof politicians>;
-export type PoliticianRating    = InferSelectModel<typeof politicianRatings>;
-export type NewPoliticianRating = InferInsertModel<typeof politicianRatings>;
+export type PoliticianItemRow   = InferSelectModel<typeof politicianItems>;
  
 export type City          = InferSelectModel<typeof cities>;
 export type NewCity       = InferInsertModel<typeof cities>;
@@ -25,11 +24,21 @@ export type NewResource = InferInsertModel<typeof resources>;
  
 
  
-export type Rating = { year: number; rating: number };
+export type PoliticianItem = { text: string; url: string | null };
+
+// The lists travel with the politician: quotes, and the good and the bad.
+export interface PoliticianLists {
+  quotes: PoliticianItem[];
+  good:   PoliticianItem[];
+  bad:    PoliticianItem[];
+}
+
+// What create/update accept: each list is optional, and replaces the stored
+// one when present.
+export type PoliticianInput = NewPolitician & Partial<Record<keyof PoliticianLists, { text: string; url?: string | null }[]>>;
 
 export interface UpsertCityMetrics {
   year: number;
-  rating?: number;
 
   permitsIssued?: number;
   permitsPer1000Residents?: number;
@@ -41,7 +50,7 @@ export interface UpsertCityMetrics {
   vacancyRate?: number;
 }
  
-export type PoliticianWithRatings = Politician & { ratings: Rating[] };
+export type PoliticianWithItems   = Politician & PoliticianLists;
 export type CityWithRatings       = City       & { ratings: UpsertCityMetrics[] };
 
 //TODO: Move these to a separate file
@@ -51,8 +60,6 @@ export interface CityFilters extends PaginationParams {
   region?: string;
   minPrice?: number;
   maxPrice?: number;
-  minScore?: number;
-  maxScore?: number;
   
 }
 
@@ -63,8 +70,6 @@ export interface PoliticianFilters extends PaginationParams {
   politicalLeaning?: string;
   nationalityCode?: string;
   status?: PoliticianStatus;
-  minScore?: number;
-  maxScore?: number;
   cityId?: number;
 }
 

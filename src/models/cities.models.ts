@@ -8,7 +8,6 @@ export const cities = sqliteTable(
     name: text("name").notNull(),
     countryCode: text("country_code").notNull(),
     region: text("region"),
-    rating: real("rating"),
     medianHousePrice: real("median_house_price"),
     currency: text("currency").default("USD"),
     notes: text("notes"),
@@ -23,7 +22,6 @@ export const cities = sqliteTable(
     index("idx_cities_name").on(t.name),
     index("idx_cities_country").on(t.countryCode),
     index("idx_cities_region").on(t.region),
-    index("idx_cities_rating").on(t.rating),
     index("idx_cities_price").on(t.medianHousePrice),
   ]
 );
@@ -37,8 +35,6 @@ export const cityRatings = sqliteTable("city_ratings", {
     .references(() => cities.id, { onDelete: "cascade" }),
 
   year: integer("year").notNull(),
-
-  rating: real("rating"),
 
   permitsIssued: integer("permits_issued"),
 

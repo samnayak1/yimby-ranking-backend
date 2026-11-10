@@ -135,7 +135,7 @@ describe('migration 0008: vacancy rate', () => {
     const repo = new SQLiteCityRepo(provider);
 
     const city = repo.create({ name: 'Raleigh', countryCode: 'US' });
-    const saved = repo.upsertMetrics(city.id, { year: 2025, rating: 7, vacancyRate: 6.4 });
+    const saved = repo.upsertMetrics(city.id, { year: 2025, vacancyRate: 6.4 });
 
     expect(saved.ratings[0]).toMatchObject({ year: 2025, vacancyRate: 6.4 });
     provider.close();

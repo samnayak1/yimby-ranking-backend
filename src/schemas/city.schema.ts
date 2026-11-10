@@ -10,17 +10,14 @@ export const createCitySchema = z.object({
   medianHousePrice: z.number().nonnegative().optional(),
   currency:         z.enum(CURRENCIES).default('USD'),
   notes:            z.string().trim().optional(),
-  rating :           z.number().min(0).max(10),
   lat:              z.number().min(-90).max(90).optional(),
   lng:              z.number().min(-180).max(180).optional(),
 });
 
 export const updateCitySchema = createCitySchema.partial();
 
-export const upsertCityRatingSchema = z.object({
+export const upsertCityMetricsSchema = z.object({
   year: z.number().int().min(2000).max(new Date().getFullYear() + 1),
-
-  rating: z.number().min(1).max(10),
 
   permitsIssued: z.number().int().nonnegative().optional(),
 
@@ -49,8 +46,8 @@ export const getCitiesQuerySchema = z.object({
   "countryCode",
   "region",
   "medianHousePrice",
-  "rating",
-]).default("rating"),
+  "permitsPer1000Residents",
+]).default("permitsPer1000Residents"),
 
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
 
@@ -61,11 +58,9 @@ export const getCitiesQuerySchema = z.object({
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
 
-  minScore: z.coerce.number().min(1).max(10).optional(),
-  maxScore: z.coerce.number().min(1).max(10).optional(),
 });
 
 export type CreateCityDto        = z.infer<typeof createCitySchema>;
 export type UpdateCityDto        = z.infer<typeof updateCitySchema>;
-export type UpsertCityRatingDto = z.infer<typeof upsertCityRatingSchema>;
+export type UpsertCityMetricsDto = z.infer<typeof upsertCityMetricsSchema>;
 export type GetCitiesQuery = z.infer<typeof getCitiesQuerySchema>;

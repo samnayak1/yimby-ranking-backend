@@ -1,11 +1,10 @@
-import { CityWithRatings, PoliticianWithRatings } from '../src/models';
+import { CityWithRatings, PoliticianWithItems } from '../src/models';
 
 export const aCity = (over: Partial<CityWithRatings> = {}): CityWithRatings => ({
   id: 1,
   name: 'Austin',
   countryCode: 'US',
   region: 'Texas',
-  rating: 7.5,
   medianHousePrice: 450000,
   currency: 'USD',
   notes: null,
@@ -18,8 +17,8 @@ export const aCity = (over: Partial<CityWithRatings> = {}): CityWithRatings => (
 });
 
 export const aPolitician = (
-  over: Partial<PoliticianWithRatings> = {},
-): PoliticianWithRatings => ({
+  over: Partial<PoliticianWithItems> = {},
+): PoliticianWithItems => ({
   id: 1,
   name: 'Jane Doe',
   designation: 'Mayor',
@@ -27,10 +26,12 @@ export const aPolitician = (
   nationalityCode: 'US',
   politicalLeaning: 'Liberal',
   notes: null,
-  rating: 8,
+  colorCode: 'DARK_GREEN',
   createdAt: '2026-01-01 00:00:00',
   updatedAt: '2026-01-01 00:00:00',
-  ratings: [],
+  quotes: [],
+  good: [],
+  bad: [],
   ...over,
 });
 

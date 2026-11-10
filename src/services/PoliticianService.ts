@@ -1,5 +1,5 @@
 import { IPoliticianRepo } from '../repos/interfaces/IPoliticianRepo';
-import { NewPolitician, PaginatedResponse, PoliticianFilters, PoliticianWithRatings } from '../models';
+import { PaginatedResponse, PoliticianFilters, PoliticianInput, PoliticianWithItems } from '../models';
 import {options} from './../config/config'
 import { createError } from '../utils/errorHelper';
 import { cached, invalidate } from '../cache/cache';
@@ -12,11 +12,11 @@ export class PoliticianService {
   constructor(private readonly repo: IPoliticianRepo) {}
 
 
-  async getAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithRatings>> {
+  async getAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithItems>> {
     return cached('politicians', 'list', filters, () => this.repo.findAll(filters));
   }
 
-  getById(id: number): PoliticianWithRatings {
+  getById(id: number): PoliticianWithItems {
     const politician = this.repo.findById(id);
     if (!politician) {
       throw createError(404, 'Politician not found');
@@ -24,7 +24,7 @@ export class PoliticianService {
     return politician;
   }
 
-  create(data: NewPolitician): PoliticianWithRatings {
+  create(data: PoliticianInput): PoliticianWithItems {
     if (!data.name?.trim()) {
       throw createError(400, 'Name is required');
     }
@@ -39,7 +39,7 @@ export class PoliticianService {
     return created;
   }
 
-  update(id: number, data: Partial<NewPolitician>): PoliticianWithRatings {
+  update(id: number, data: Partial<PoliticianInput>): PoliticianWithItems {
     this.getById(id);
 
     this.validate(data);
@@ -53,22 +53,6 @@ export class PoliticianService {
     this.getById(id);
     this.repo.delete(id);
     this.refresh();
-  }
-
-  upsertRating(id: number, year: number, rating: number): PoliticianWithRatings {
-    this.getById(id);
-
-    if (year < 2000 || year > new Date().getFullYear() + 1) {
-      throw createError(400, 'Invalid year');
-    }
-
-    if (rating < 1 || rating > 10) {
-      throw createError(400, 'Rating must be between 1 and 10');
-    }
-
-    const saved = this.repo.upsertRating(id, year, rating)!;
-    this.refresh();
-    return saved;
   }
 
   async getDesignations(): Promise<string[]> {
@@ -91,7 +75,7 @@ export class PoliticianService {
     ]);
   }
 
-  private validate(data: Partial<NewPolitician>): void {
+  private validate(data: Partial<PoliticianInput>): void {
     if (data.designation && !DESIGNATIONS.has(data.designation)) {
       throw createError(
         400,

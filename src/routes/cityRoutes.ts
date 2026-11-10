@@ -6,7 +6,7 @@ import {
   createCitySchema,
   getCitiesQuerySchema,
   updateCitySchema,
-  upsertCityRatingSchema,
+  upsertCityMetricsSchema,
 } from '../schemas/city.schema';
 import { validate, validateQuery } from '../middleware/typeValidators';
 
@@ -40,7 +40,7 @@ export function cityRoutes(controller: CityController): Router {
   );
 
   router.put('/:id/ratings',
-    authMiddleware, requireAdmin, validate(upsertCityRatingSchema),
+    authMiddleware, requireAdmin, validate(upsertCityMetricsSchema),
     controller.upsertMetrics
   );
 

@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { options } from '../config/config';
 import { PoliticianStatus } from '../types/enums';
+import { COLOR_CODES } from '../models/politicians.models';
+import { blankToNull, httpUrl } from './media.schemas';
 
 
 
@@ -8,22 +10,26 @@ const DESIGNATIONS = options.designations;
 
 const LEANINGS = options.politicalLeanings;
 
+const itemSchema = z.object({
+  text: z.string().trim().min(1, 'Text is required').max(2000),
+  url:  z.preprocess(blankToNull, httpUrl.nullable().optional()),
+});
+
 export const createPoliticianSchema = z.object({
   name:             z.string().trim().min(1, 'Name is required'),
   designation:      z.enum(DESIGNATIONS).optional(),
   status:       z.enum(PoliticianStatus).optional(),
   nationalityCode:      z.string().trim(),
-  rating :              z.number().min(0).max(10),
+  colorCode:        z.enum(COLOR_CODES).nullable().optional(),
   politicalLeaning: z.enum(LEANINGS).optional(),
   notes:            z.string().trim().optional(),
+  // Each list replaces the stored one when sent; leave it out to keep it.
+  quotes:           z.array(itemSchema).max(50).optional(),
+  good:             z.array(itemSchema).max(50).optional(),
+  bad:              z.array(itemSchema).max(50).optional(),
 });
 
 export const updatePoliticianSchema = createPoliticianSchema.partial();
-
-export const upsertPoliticianRatingSchema = z.object({
-  year:    z.number().int().min(2000).max(new Date().getFullYear() + 1),
-  rating: z.number().min(1).max(10),
-});
 
 export const getPoliticiansQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -33,7 +39,7 @@ sortBy: z.enum([
   "designation",
   "politicalLeaning",
   "nationalityCode",
-  "rating",
+  "colorCode",
 ]).default("name"),
 
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
@@ -45,13 +51,10 @@ sortBy: z.enum([
 
   status: z.enum(PoliticianStatus).optional(),
 
-  minScore: z.coerce.number().min(1).max(10).optional(),
-  maxScore: z.coerce.number().min(1).max(10).optional(),
-
   cityId: z.coerce.number().int().positive().optional(),
 });
 
 export type CreatePoliticianDto        = z.infer<typeof createPoliticianSchema>;
 export type UpdatePoliticianDto        = z.infer<typeof updatePoliticianSchema>;
-export type UpsertPoliticianRatingDto = z.infer<typeof upsertPoliticianRatingSchema>;
+export type PoliticianItemDto          = z.infer<typeof itemSchema>;
 export type GetPoliticiansQuery = z.infer<typeof getPoliticiansQuerySchema>;

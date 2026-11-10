@@ -105,7 +105,7 @@ describe('CityService', () => {
 
 
   describe('upsertMetrics', () => {
-    const valid = { year: 2026, rating: 8 };
+    const valid = { year: 2026 };
 
     it('rejects a year before 2000', async () => {
       await expectStatus(
@@ -150,14 +150,6 @@ describe('CityService', () => {
       const repo = makeRepo();
       new CityService(repo).upsertMetrics(1, { ...valid, vacancyRate });
       expect(repo.upsertMetrics).toHaveBeenCalledWith(1, expect.objectContaining({ vacancyRate }));
-    });
-
-    it('rejects a rating above 10', async () => {
-      await expectStatus(
-        () => new CityService(makeRepo()).upsertMetrics(1, { ...valid, rating: 11 }),
-        400,
-        /rating/i,
-      );
     });
 
     it('passes a valid payload through to the repo', () => {

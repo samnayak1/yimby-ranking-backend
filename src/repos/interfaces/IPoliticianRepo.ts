@@ -1,12 +1,11 @@
-import { NewPolitician, PaginatedResponse, PoliticianFilters,  PoliticianWithRatings } from '../../models/index';
+import { PaginatedResponse, PoliticianFilters, PoliticianInput, PoliticianWithItems } from '../../models/index';
 
 export interface IPoliticianRepo {
- findAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithRatings>>;
-  findById(id: number): PoliticianWithRatings | null;
-  create(data: NewPolitician): PoliticianWithRatings;
-  update(id: number, data: Partial<NewPolitician>): PoliticianWithRatings | null;
+ findAll(filters?: PoliticianFilters): Promise<PaginatedResponse<PoliticianWithItems>>;
+  findById(id: number): PoliticianWithItems | null;
+  create(data: PoliticianInput): PoliticianWithItems;
+  update(id: number, data: Partial<PoliticianInput>): PoliticianWithItems | null;
   delete(id: number): boolean;
   getDesignations(): Promise<string[]>
   getPoliticalLeanings(): Promise<string[]> 
-  upsertRating(politicianId: number, year: number, rating: number): PoliticianWithRatings | null;
 }
