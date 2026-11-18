@@ -87,6 +87,8 @@ services:
         max-file: "3"
 
   backend:
+    # Fixed name so scripts/ship.sh can save/load it.
+    image: yimby-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -130,6 +132,7 @@ services:
         condition: service_started
 
   caddy:
+    image: yimby-caddy:latest
     build:
       context: ./yimby-ranking-client
       dockerfile: Dockerfile
