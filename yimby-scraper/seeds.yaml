@@ -1,0 +1,76 @@
+# Sites the nightly crawler reads. Checked by hand on 2026-11-21: each one's
+# robots.txt allows it and the feed or sitemap returned recent items.
+#
+#   name          shown as the article's source; also the key for the crawl
+#                 cursor, so renaming a seed makes it start fresh
+#   url           the feed, sitemap or listing page
+#   type          feed (RSS/Atom, the default) | sitemap | page
+#   link_pattern  sitemap/page only: regex an article URL must match
+#
+# Order matters a little: when a per-run limit is hit, seeds further down wait
+# for the next night. Focused sources come first, noisy ones last.
+#
+# Left out on purpose:
+#   abc7news.com        robots.txt blocks AI and scraper bots by name
+#   thecityreporter.nyc browser challenge that blocks automated visitors
+#   edc.nyc             captcha in front of news and press releases
+#   sightline.org       feed returns 403 to anything that identifies as a crawler
+#   ggwash.org, newyorkyimby.com, texastribune.org, calmatters.org,
+#   nextcity.org, missionlocal.org: feeds return 403 to crawlers
+
+seeds:
+  # ---- YIMBY groups and housing-focused --------------------------------
+  - name: California YIMBY
+    url: https://cayimby.org/feed/
+  - name: SF YIMBY
+    url: https://www.sfyimby.com/feed
+  - name: Chicago YIMBY
+    url: https://chicagoyimby.com/feed
+  - name: Florida YIMBY
+    url: https://floridayimby.com/feed
+  - name: Philly YIMBY
+    url: https://phillyyimby.com/feed
+  - name: Abundant Housing MA
+    url: https://abundanthousingma.org/feed/
+  - name: Naked Denver
+    # Its RSS feed lives under /api/, which robots.txt disallows; the sitemap
+    # is allowed and dates every post.
+    url: https://www.nakeddenver.com/sitemap.xml
+    type: sitemap
+    link_pattern: ^https://www\.nakeddenver\.com/post/
+
+  # ---- Urbanism and policy ---------------------------------------------
+  - name: Strong Towns
+    url: https://www.strongtowns.org/journal?format=rss
+  - name: The Urbanist
+    url: https://www.theurbanist.org/feed/
+  - name: Market Urbanism
+    url: https://www.marketurbanism.com/feed/
+  - name: Planetizen
+    url: https://www.planetizen.com/frontpage/feed
+  - name: Greater Auckland
+    url: https://greaterauckland.org.nz/feed/
+  - name: Streetsblog SF
+    url: https://sf.streetsblog.org/feed
+  - name: Streetsblog USA
+    url: https://usa.streetsblog.org/feed
+  - name: Streetsblog NYC
+    url: https://nyc.streetsblog.org/feed
+  - name: Streetsblog LA
+    url: https://la.streetsblog.org/feed
+  - name: Streetsblog Chicago
+    url: https://chi.streetsblog.org/feed
+
+  # ---- Noisy: mostly off-topic, the headline pre-filter does the work ---
+  - name: Shelterforce
+    url: https://shelterforce.org/feed/
+  - name: Denverite
+    url: https://www.denverite.com/feed/
+  - name: Vox
+    url: https://www.vox.com/rss/policy/index.xml
+  - name: realtor.com
+    url: https://www.realtor.com/news/feed/
+  - name: HousingWire
+    url: https://www.housingwire.com/feed/
+  - name: Bisnow
+    url: https://www.bisnow.com/rss

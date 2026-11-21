@@ -195,6 +195,34 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Nightly housing-news crawler (yimby-scraper/). The "jobs" profile keeps
+  # `docker compose up` from starting it; cron runs it once a night with
+  #   docker compose --profile jobs run --rm news-crawler
+  # (scripts/ship.sh installs that crontab entry). It only inserts rows; the
+  # backend owns the schema, so the backend must have started once first.
+  news-crawler:
+    image: yimby-news-crawler:latest
+    build:
+      context: ./yimby-scraper
+    profiles: ["jobs"]
+    restart: "no"
+
+    mem_limit: 192m
+
+    # Only what the crawler needs, not the whole .env.
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MONTHLY_BUDGET_USD: ${CRAWLER_MONTHLY_BUDGET_USD:-10}
+
+    volumes:
+      - sqlite_data:/app/db
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   sqlite_data:
   caddy_data:

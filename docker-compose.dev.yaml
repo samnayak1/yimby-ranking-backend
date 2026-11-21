@@ -93,27 +93,22 @@ services:
 
 
 
-  scraper:
+  # Nightly news crawler, run by hand in dev:
+  #   docker compose -f docker-compose.dev.yaml --profile jobs run --rm news-crawler --dry-run
+  news-crawler:
     build:
       context: ./yimby-scraper
-      dockerfile: Dockerfile
 
-    profiles: ["scraper"]
+    profiles: ["jobs"]
 
     restart: "no"
 
-    env_file:
-      - .env
-      - ./yimby-scraper/.env
-
     environment:
-      DB_PATH: /data/database.sqlite
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      MONTHLY_BUDGET_USD: ${CRAWLER_MONTHLY_BUDGET_USD:-10}
 
     volumes:
-      - ./yimby-scraper:/app
-
-      - sqlite_data_dev:/data
-      - scraper_data_dev:/app/data
+      - sqlite_data_dev:/app/db
 
     depends_on:
       litestream-restore:
@@ -156,4 +151,3 @@ services:
 
 volumes:
   sqlite_data_dev:
-  scraper_data_dev:

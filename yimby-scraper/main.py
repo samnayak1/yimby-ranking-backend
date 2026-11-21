@@ -1,283 +1,88 @@
-"""
-YIMBY Scraper — two-stage pipeline in one file.
+"""Nightly housing-news crawler.
 
-Stage 1 (scrape):  fetch Reddit posts → save to disk
-Stage 2 (extract): load from disk → LLM extraction → DB
-
-Usage:
-    python main.py                  # full pipeline
-    python main.py --stage scrape   # stage 1 only
-    python main.py --stage extract  # stage 2 only (reuses latest scraped data)
-    python main.py --reextract      # stage 2, ignore cached LLM extractions
-    python main.py --only cities
-    python main.py --only politicians
+    python main.py                       # full run
+    python main.py --dry-run             # read and classify, write nothing
+    python main.py --seed "SF YIMBY"     # one seed (repeatable)
+    python main.py --limit 10            # read at most 10 articles in full
 """
-import asyncio
-import datetime
-import json
+from __future__ import annotations
+
 import argparse
-from pathlib import Path
+import asyncio
+import dataclasses
+import logging
+import sys
 
-from config import YEARS_BACK
-from scrapers.reddit import fetch_posts, chunk_posts, bundle_for_entity, Post
-from extractors.llm_extractor import discover_all_entities, extract_city, extract_politician, infer_coordinates
-from utils.housing_stats import fetch_housing_stats
-from db.writer import write_city, write_politician
-from db.file_writer import save_json
+from dotenv import load_dotenv
 
-CURRENT_YEAR = datetime.date.today().year
-TARGET_YEARS = list(range(CURRENT_YEAR - YEARS_BACK, CURRENT_YEAR + 1))
-WRITE_TO_DB  = True
-
-
-
-DATA         = Path("data")
-RAW          = DATA / "raw"
-BUNDLES      = RAW  / "bundles"
-DISCOVERED   = DATA / "discovered"
-EXTRACTED    = DATA / "extracted"
-
-for d in [RAW, BUNDLES, DISCOVERED, EXTRACTED]:
-    d.mkdir(parents=True, exist_ok=True)
-
-def today() -> str:
-    return datetime.date.today().isoformat()
-
-def _safe(name: str) -> str:
-    return name.replace(" ", "_").replace("/", "-")
-
-def raw_posts_path()         -> Path: return RAW        / f"posts_{today()}.json"
-def discovered_path()        -> Path: return DISCOVERED  / f"entities_{today()}.json"
-def bundle_path(t, name)     -> Path: return BUNDLES     / f"{t}_{_safe(name)}.json"
-def extracted_path(t, name)  -> Path: return EXTRACTED   / f"{t}_{_safe(name)}.json"
-
-def latest(directory: Path, pattern: str) -> Path | None:
-    files = sorted(directory.glob(pattern), reverse=True)
-    return files[0] if files else None
-
-def _write(path: Path, data) -> None:
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
-
-def _read(path: Path):
-    return json.loads(path.read_text())
-
-def _posts_to_dicts(posts: list[Post]) -> list[dict]:
-    return [{"title": p.title, "body": p.body, "score": p.score,
-             "url": p.url, "flair": p.flair, "comments": p.comments}
-            for p in posts]
-
-def _dicts_to_posts(dicts: list[dict]) -> list[Post]:
-    return [Post(**d) for d in dicts]
+from news_crawler.classifier import GeminiClassifier
+from news_crawler.config import Settings
+from news_crawler.discovery import DiscovererRegistry
+from news_crawler.extractor import ArticleExtractor
+from news_crawler.http_client import PoliteHttpClient
+from news_crawler.pipeline import CrawlPipeline
+from news_crawler.seeds import SeedLoader
+from news_crawler.store import DryRunStore, NewsStore
 
 
+class CrawlerApp:
+    """Builds the pipeline from settings and command-line options, and runs it."""
+
+    def __init__(self, settings: Settings, args: argparse.Namespace) -> None:
+        if args.limit is not None:
+            settings = dataclasses.replace(settings, max_classified_per_run=args.limit)
+        self._settings = settings
+        self._args = args
+
+    async def run(self) -> int:
+        settings = self._settings
+        seeds = SeedLoader(settings.seeds_path).load(only=self._args.seed or ())
+        store_class = DryRunStore if self._args.dry_run else NewsStore
+        store = store_class(settings.db_path)
+
+        try:
+            async with PoliteHttpClient(
+                user_agent=settings.user_agent,
+                delay_seconds=settings.request_delay_seconds,
+                timeout_seconds=settings.request_timeout_seconds,
+            ) as http:
+                pipeline = CrawlPipeline(
+                    seeds=seeds,
+                    store=store,
+                    discoverers=DiscovererRegistry(http),
+                    extractor=ArticleExtractor(http),
+                    classifier=GeminiClassifier(
+                        settings.gemini_api_key, settings.gemini_model, settings.gemini_thinking_level,
+                    ),
+                    settings=settings,
+                )
+                await pipeline.run()
+        finally:
+            store.close()
+        return 0
+
+    @staticmethod
+    def parse_args(argv: list[str]) -> argparse.Namespace:
+        parser = argparse.ArgumentParser(description="Crawl housing news into the YIMBY tracker database.")
+        parser.add_argument("--dry-run", action="store_true", help="classify but write nothing; log results")
+        parser.add_argument("--seed", action="append", metavar="NAME", help="crawl only this seed (repeatable)")
+        parser.add_argument("--limit", type=int, metavar="N", help="read at most N articles in full")
+        parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
+        return parser.parse_args(argv)
 
 
-async def stage_scrape() -> tuple[list[Post], dict]:
-    """Fetch posts, run discovery, save everything to disk."""
-
-    # Fetch posts (or reuse today's if already scraped)
-    rp = raw_posts_path()
-    if rp.exists():
-        print(f"Loading existing posts from {rp}...")
-        posts = _dicts_to_posts(_read(rp))
-        print(f"Loaded {len(posts)} posts.")
-    else:
-        posts = await fetch_posts()
-        _write(rp, _posts_to_dicts(posts))
-        print(f"Saved {len(posts)} raw posts → {rp}")
-
-
-    dp = discovered_path()
-    if dp.exists():
-        print(f"Loading existing discovered entities from {dp}...")
-        entities = _read(dp)
-    else:
-        print("\nRunning LLM discovery pass...")
-        chunks   = chunk_posts(posts, chunk_size=30)
-        entities = await discover_all_entities(chunks)
-        _write(dp, entities)
-        print(f"Saved discovered entities → {dp}")
-
-
-    print("\nBundling posts per entity...")
-    for name in entities.get("cities", []):
-        text = bundle_for_entity(posts, name)
-        if text:
-            _write(bundle_path("city", name),
-                   {"entity_type": "city", "name": name, "text": text})
-
-    for name in entities.get("politicians", []):
-        text = bundle_for_entity(posts, name)
-        if text:
-            _write(bundle_path("politician", name),
-                   {"entity_type": "politician", "name": name, "text": text})
-
-    print(f"\nSAVED Stage 1 done — {len(entities.get('cities',[]))} cities, "
-          f"{len(entities.get('politicians',[]))} politicians discovered.")
-    return posts, entities
-
-
-# ──---------──────────────────────────────────────────
-#stage extract
-
-async def process_city(name: str, posts: list[Post], reextract: bool = False) -> bool:
-    ext = extracted_path("city", name)
-    bun = bundle_path("city", name)
-
-    # Load or create LLM extraction
-    if ext.exists() and not reextract:
-        print(f"  [city] Using cached extraction for {name}")
-        data = _read(ext)
-    else:
-        if not bun.exists():
-            # Fall back to bundling on the fly from in-memory posts
-            text = bundle_for_entity(posts, name)
-        else:
-            text = _read(bun)["text"]
-
-        if not text:
-            print(f"  [city] No relevant posts for {name} — skipping")
-            return False
-
-        data = await extract_city(name, text)
-        if not data:
-            print(f"  [city] Extraction failed for {name}")
-            return False
-
-        _write(ext, data)
-
-    # if geo code missing then try and get the llm to do it for you
-    if not data.get("lat") or not data.get("lng"):
-        coords = await infer_coordinates(data.get("name", name), data.get("country", ""))
-
-        if coords:
-            data.update(coords)
-            _write(ext, data)   # update cache with coords
-
-    # Housing stats
-    stats = await fetch_housing_stats(name, data.get("countryCode", ""), TARGET_YEARS)
-
-    # Fill median price from stats if missing
-    if not data.get("medianHousePrice") and stats:
-        latest_stat = next((s for s in reversed(stats) if s.get("medianHousePrice")), None)
-        if latest_stat:
-            data["medianHousePrice"] = latest_stat["medianHousePrice"]
-            data["currency"]         = latest_stat.get("currency", "USD")
-            _write(ext, data)
-
-    if WRITE_TO_DB:
-        city_id = await write_city(data, stats)
-        print(f"  [city] SAVED {name} → DB id={city_id} "
-              f"({len(stats or [])} years of stats)")
-    else:
-        save_json("city", name, {"city": data, "stats": stats})
-        print(f"  [city] SAVED {name} → saved to file")
-
-    return True
-
-
-async def process_politician(name: str, posts: list[Post], reextract: bool = False) -> bool:
-    ext = extracted_path("politician", name)
-    bun = bundle_path("politician", name)
-
-    if ext.exists() and not reextract:
-        print(f"  [politician] Using cached extraction for {name}")
-        data = _read(ext)
-    else:
-        if not bun.exists():
-            text = bundle_for_entity(posts, name)
-        else:
-            text = _read(bun)["text"]
-
-        if not text:
-            print(f"  [politician] No relevant posts for {name} — skipping")
-            return False
-
-        data = await extract_politician(name, text)
-        if not data:
-            print(f"  [politician] Extraction failed for {name}")
-            return False
-
-        _write(ext, data)
-
-    if WRITE_TO_DB:
-        pol_id = await write_politician(data)
-        print(f"  [politician] SAVED {name} → DB id={pol_id}")
-    else:
-        save_json("politician", name, data)
-        print(f"  [politician] SAVED {name} → saved to file")
-
-    return True
-
-
-async def stage_extract(
-    entities: dict,
-    posts: list[Post],
-    reextract: bool = False,
-    only: str | None = None,
-) -> None:
-    sem = asyncio.Semaphore(2)
-
-    async def safe_city(name):
-        async with sem:
-            await process_city(name, posts, reextract)
-            await asyncio.sleep(0.4)
-
-    async def safe_politician(name):
-        async with sem:
-            await process_politician(name, posts, reextract)
-            await asyncio.sleep(0.4)
-
-    cities      = entities.get("cities", [])
-    politicians = entities.get("politicians", [])
-
-    if only != "politicians":
-        print(f"\nPass 2 — Extracting {len(cities)} cities...")
-        await asyncio.gather(*[safe_city(c) for c in cities])
-
-    if only != "cities":
-        print(f"\nPass 3 — Extracting {len(politicians)} politicians...")
-        await asyncio.gather(*[safe_politician(p) for p in politicians])
-
-
-
-
-async def main(stage: str | None, reextract: bool, only: str | None) -> None:
-    print("=" * 60)
-    print("YIMBY Scraper — LLM-driven discovery mode")
-    print("=" * 60)
-
-    if stage == "extract":
-        # Load from disk — no Reddit call
-        dp = latest(DISCOVERED, "entities_*.json")
-        rp = latest(RAW, "posts_*.json")
-        if not dp or not rp:
-            print("No scraped data found. Run without --stage first.")
-            return
-        entities = _read(dp)
-        posts    = _dicts_to_posts(_read(rp))
-        print(f"Loaded {len(posts)} posts and discovered entities from disk.")
-    else:
-        posts, entities = await stage_scrape()
-
-    if stage != "scrape":
-        await stage_extract(entities, posts, reextract=reextract, only=only)
-
-    print("\n" + "=" * 60)
-    cities      = entities.get("cities", [])
-    politicians = entities.get("politicians", [])
-    print(f"Done. {len(cities)} cities, {len(politicians)} politicians.")
-    print("=" * 60)
+def main(argv: list[str]) -> int:
+    # Local runs read yimby-scraper/.env; in Docker the variables come from compose.
+    load_dotenv()
+    args = CrawlerApp.parse_args(argv)
+    logging.basicConfig(
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    # httpx logs every request at INFO, which buries the crawler's own lines.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    return asyncio.run(CrawlerApp(Settings.from_env(), args).run())
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--stage",      choices=["scrape", "extract"],
-                        help="Run only one stage")
-    parser.add_argument("--reextract",  action="store_true",
-                        help="Re-run LLM even if cached extraction exists")
-    parser.add_argument("--only",       choices=["cities", "politicians"],
-                        help="Process only one entity type")
-    args = parser.parse_args()
-
-    asyncio.run(main(stage=args.stage, reextract=args.reextract, only=args.only))
+    sys.exit(main(sys.argv[1:]))

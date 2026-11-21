@@ -2,11 +2,13 @@ import { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { politicianItems, politicians } from "./politicians.models";
 import { cities, cityRatings } from "./cities.models";
 import { creators, resources } from "./media.models";
+import { newsArticles, NewsOutcome } from "./news.models";
 import { PaginationParams } from "../types";
 import { PoliticianStatus } from "../types/enums";
 export * from './cities.models'
 export * from './politicians.models'
 export * from './media.models'
+export * from './news.models'
 
 export type Politician       = InferSelectModel<typeof politicians>;
 export type NewPolitician    = InferInsertModel<typeof politicians>;
@@ -21,6 +23,14 @@ export type Creator     = InferSelectModel<typeof creators>;
 export type NewCreator  = InferInsertModel<typeof creators>;
 export type Resource    = InferSelectModel<typeof resources>;
 export type NewResource = InferInsertModel<typeof resources>;
+export type NewsArticle = InferSelectModel<typeof newsArticles>;
+
+export interface NewsFilters extends PaginationParams {
+  outcome?: NewsOutcome;
+  countryCode?: string;
+  // Admin view: include articles an admin has hidden.
+  includeHidden?: boolean;
+}
  
 
  

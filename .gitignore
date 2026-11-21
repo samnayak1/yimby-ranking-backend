@@ -61,3 +61,6 @@ __pycache__/
 
 # Caddy access logs, bind-mounted from the caddy container.
 logs/
+
+# Python test cache
+.pytest_cache/

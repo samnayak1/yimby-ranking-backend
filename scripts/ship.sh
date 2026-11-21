@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 
 HOST=${1:-yimby}
 REMOTE_DIR=${2:-yimby-ranking-backend}
-IMAGES=(yimby-backend:latest yimby-caddy:latest)
+IMAGES=(yimby-backend:latest yimby-caddy:latest yimby-news-crawler:latest)
 
 echo "==> Reading build-time VITE_* values from $HOST:.env"
 # Exported vars take precedence over the local .env during compose interpolation,
@@ -26,6 +26,7 @@ done < <(ssh "$HOST" "grep -E '^VITE_[A-Z_]+=' $REMOTE_DIR/.env")
 echo "==> Building locally"
 git submodule update --init
 docker compose build backend caddy
+docker compose --profile jobs build news-crawler
 
 echo "==> Shipping images to $HOST"
 docker save "${IMAGES[@]}" | gzip | ssh "$HOST" 'gunzip | docker load'
@@ -37,4 +38,11 @@ ssh "$HOST" "set -e
   mkdir -p logs/caddy
   docker compose up -d --no-build
   docker image prune -f
-  docker compose ps"
+  docker compose ps
+
+  # Nightly news crawler at midnight server time (UTC on Lightsail). The tag
+  # comment makes this idempotent: the old line is replaced, never duplicated.
+  ( crontab -l 2>/dev/null | grep -v '# yimby-news-crawler$' || true
+    echo '0 0 * * * cd \$HOME/$REMOTE_DIR && docker compose --profile jobs run --rm news-crawler >> logs/news-crawler.log 2>&1 # yimby-news-crawler'
+  ) | crontab -
+  echo 'Crawler cron:' && crontab -l | grep 'yimby-news-crawler$'"

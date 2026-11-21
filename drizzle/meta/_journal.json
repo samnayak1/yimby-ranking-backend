@@ -92,6 +92,13 @@
       "when": 1794295031410,
       "tag": "0012_remove_ratings",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1795266218611,
+      "tag": "0013_news_articles",
+      "breakpoints": true
     }
   ]
 }

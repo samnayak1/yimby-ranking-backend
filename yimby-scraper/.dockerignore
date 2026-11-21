@@ -1,9 +1,6 @@
-venv/
-__pycache__/
-*.pyc
-.env
-data/
-output/
-cache/
-Dockerfile
-.dockerignore
+*
+!requirements.txt
+!main.py
+!seeds.yaml
+!news_crawler/
+**/__pycache__

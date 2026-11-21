@@ -98,15 +98,32 @@ docker compose logs litestream-restore   # should say it restored from S3
 
 
 
-Running the Scraper
-The Python scraper is for development only and is not included in the main production deployment. It writes directly to your local development database.
+## News crawler
 
-Run the scraper using the scraper Docker profile:
+`yimby-scraper/` crawls housing news every night and fills the "Scraped News
+Articles" tab. It reads the feeds and sitemaps in `yimby-scraper/seeds.yaml`,
+asks Gemini (3.5 Flash-Lite) which articles are about housing supply and
+whether each is a win or a loss, and writes them to the `news_articles` table.
 
-Bash
-# Run the full pipeline
-docker compose -f docker-compose.dev.yaml --profile scraper run --rm scraper
+- **Schedule:** midnight UTC, from a crontab entry `scripts/ship.sh` installs
+  on the server. Output goes to `logs/news-crawler.log`.
+- **Never starts over:** every link it has looked at is stored, each seed keeps
+  a cursor and its feed's ETag in `news_sources`, and each run is logged with
+  its token cost in `news_crawl_runs`.
+- **Cost caps:** at most 100 articles read in full per run, and a monthly
+  budget (`CRAWLER_MONTHLY_BUDGET_USD`, default $10) checked before every
+  Gemini call.
+- **Needs** `GEMINI_API_KEY` in `.env`.
 
-# Run only specific stages
-docker compose -f docker-compose.dev.yaml --profile scraper run --rm scraper --only cities
-docker compose -f docker-compose.dev.yaml --profile scraper run --rm scraper --reextract
+```bash
+# Production (what cron runs)
+docker compose --profile jobs run --rm news-crawler
+
+# Dev: classify without writing anything
+docker compose -f docker-compose.dev.yaml --profile jobs run --rm news-crawler --dry-run --limit 5
+
+# Locally, with yimby-scraper/.env
+cd yimby-scraper && pip install -r requirements-dev.txt
+python main.py --dry-run --seed "SF YIMBY" --limit 5
+pytest
+```

@@ -16,6 +16,9 @@ docker compose build backend
 echo "==> Building client (tsc + vite; the memory-hungry one)"
 docker compose build caddy
 
+echo "==> Building news crawler"
+docker compose --profile jobs build news-crawler
+
 echo "==> Starting"
 docker compose up -d
 
