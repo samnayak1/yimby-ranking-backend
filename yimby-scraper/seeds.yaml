@@ -34,6 +34,22 @@ seeds:
     url: https://www.6sqft.com/feed/
   - name: Boston Real Estate Times
     url: https://bostonrealestatetimes.com/feed/
+  - name: UrbanToronto
+    url: https://urbantoronto.ca/feed/
+  - name: Storeys
+    url: https://storeys.com/feeds/feed.rss
+  - name: Abundant Housing Vancouver
+    url: https://www.abundanthousingvancouver.com/blog?format=rss
+  - name: Missing Middle Initiative
+    url: https://www.missingmiddleinitiative.ca/feed
+  - name: Brisbane Development
+    url: https://brisbanedevelopment.com.au/feed/
+  - name: The Urban Developer
+    # No RSS feed. articles/sitemap/0.xml is the newest 500 articles; the
+    # sitemap index lists 44 children with no dates, so it's skipped.
+    url: https://www.theurbandeveloper.com/articles/sitemap/0.xml
+    type: sitemap
+    link_pattern: ^https://www\.theurbandeveloper\.com/articles/
 
   # ---- Urbanism and policy ---------------------------------------------
   - name: Strong Towns
@@ -46,6 +62,10 @@ seeds:
     url: https://www.planetizen.com/frontpage/feed
   - name: Greater Auckland
     url: https://greaterauckland.org.nz/feed/
+  - name: Spacing Toronto
+    url: https://spacing.ca/toronto/feed/
+  - name: Spacing Vancouver
+    url: https://spacing.ca/vancouver/feed/
   - name: Streetsblog SF
     url: https://sf.streetsblog.org/feed
   - name: Streetsblog USA
@@ -76,6 +96,12 @@ seeds:
     url: https://www.miamitodaynews.com/feed/
   - name: Bungalower
     url: https://bungalower.com/feed/
+  - name: City Hub Sydney
+    url: https://cityhub.com.au/feed/
+  - name: The Tyee
+    url: https://thetyee.ca/rss2.xml
+  - name: MTL Blog
+    url: https://www.mtlblog.com/feeds/feed.rss
   - name: Vox
     url: https://www.vox.com/rss/policy/index.xml
   - name: realtor.com

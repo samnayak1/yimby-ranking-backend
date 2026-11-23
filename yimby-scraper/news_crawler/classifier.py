@@ -49,6 +49,8 @@ For a relevant article, also give:
 - country_code: ISO 3166-1 alpha-2 code of the country, e.g. US; null if unclear.
 - tags: up to 4 lower-case topics, e.g. zoning, permits, transit, adu, rent, legislation.
 
+Write title, summary and tags in English, even when the article is in another language.
+
 For an article that is not relevant, set relevant to false and leave the rest null."""
 
 
