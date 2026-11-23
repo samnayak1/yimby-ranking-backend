@@ -15,6 +15,22 @@
 #   thecityreporter.nyc browser challenge that blocks automated visitors
 #   edc.nyc             captcha in front of news and press releases
 #   sightline.org       feed returns 403 to anything that identifies as a crawler
+#   therealdeal.com     every page, feed and even robots.txt return 403 to crawlers
+#   axios.com           Cloudflare challenge in front of every page, feeds included
+#   thenextmiami.com    robots.txt doesn't respond, which counts as "keep out"
+#   towers.net          feed works but hasn't been updated since 2018
+#   Open feeds whose robots.txt blocks AI bots (same reason as abc7):
+#     urbanize.city, universalhub.com, houstonpublicmedia.org, brownstoner.com,
+#     raleighmag.com, thebaltimorebanner.com (CCBot only)
+#   Feeds returning 403 to crawlers (checked 2026-11-23): Block Club Chicago,
+#     PubliCola, The Stranger, Austin Chronicle, CandysDirt, D Magazine,
+#     Houston Landing, Houstonia, INDY Week, NC Newsline, CommonWealth Beacon,
+#     Billy Penn, BridgeDetroit, Outlier Media, Model D, Voice of San Diego,
+#     Times of San Diego, San Antonio Report, San Antonio Current, Orlando
+#     Weekly, THE CITY, Gothamist, Baltimore Fishbowl, Washington City Paper,
+#     The DC Line, BikePortland, Oregon Capital Chronicle, Nashville Banner,
+#     Tennessee Lookout, The Mercury News, MinnPost, Sahan Journal,
+#     Finance & Commerce
 #   ggwash.org, newyorkyimby.com, texastribune.org, calmatters.org,
 #   nextcity.org, missionlocal.org: feeds return 403 to crawlers
 
@@ -30,6 +46,10 @@ seeds:
     url: https://floridayimby.com/feed
   - name: Philly YIMBY
     url: https://phillyyimby.com/feed
+  - name: Jersey Digs
+    # New Jersey development news; also runs restaurant and jobs posts,
+    # which the headline pre-filter drops.
+    url: https://jerseydigs.com/feed/
   - name: Abundant Housing MA
     url: https://abundanthousingma.org/feed/
   - name: Naked Denver
@@ -38,6 +58,16 @@ seeds:
     url: https://www.nakeddenver.com/sitemap.xml
     type: sitemap
     link_pattern: ^https://www\.nakeddenver\.com/post/
+  - name: Next Portland
+    url: https://nextportland.com/feed/
+  - name: Circulate San Diego
+    url: https://www.circulatesd.org/blog?format=rss
+  - name: San José Spotlight
+    url: https://sanjosespotlight.com/feed/
+  - name: 6sqft
+    url: https://www.6sqft.com/feed/
+  - name: Boston Real Estate Times
+    url: https://bostonrealestatetimes.com/feed/
 
   # ---- Urbanism and policy ---------------------------------------------
   - name: Strong Towns
@@ -60,12 +90,26 @@ seeds:
     url: https://la.streetsblog.org/feed
   - name: Streetsblog Chicago
     url: https://chi.streetsblog.org/feed
+  - name: Streetsblog Mass
+    url: https://mass.streetsblog.org/feed
+  - name: Streets.mn
+    url: https://streets.mn/feed/
+  - name: Hidden City Philadelphia
+    url: https://hiddencityphila.org/feed/
 
   # ---- Noisy: mostly off-topic, the headline pre-filter does the work ---
   - name: Shelterforce
     url: https://shelterforce.org/feed/
   - name: Denverite
     url: https://www.denverite.com/feed/
+  - name: Capitol Hill Seattle Blog
+    url: https://www.capitolhillseattle.com/feed/
+  - name: Dallas Innovates
+    url: https://dallasinnovates.com/feed/
+  - name: Miami Today
+    url: https://www.miamitodaynews.com/feed/
+  - name: Bungalower
+    url: https://bungalower.com/feed/
   - name: Vox
     url: https://www.vox.com/rss/policy/index.xml
   - name: realtor.com
