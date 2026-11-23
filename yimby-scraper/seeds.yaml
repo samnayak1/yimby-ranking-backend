@@ -1,38 +1,4 @@
-# Sites the nightly crawler reads. Checked by hand on 2026-11-21: each one's
-# robots.txt allows it and the feed or sitemap returned recent items.
-#
-#   name          shown as the article's source; also the key for the crawl
-#                 cursor, so renaming a seed makes it start fresh
-#   url           the feed, sitemap or listing page
-#   type          feed (RSS/Atom, the default) | sitemap | page
-#   link_pattern  sitemap/page only: regex an article URL must match
-#
-# Order matters a little: when a per-run limit is hit, seeds further down wait
-# for the next night. Focused sources come first, noisy ones last.
-#
-# Left out on purpose:
-#   abc7news.com        robots.txt blocks AI and scraper bots by name
-#   thecityreporter.nyc browser challenge that blocks automated visitors
-#   edc.nyc             captcha in front of news and press releases
-#   sightline.org       feed returns 403 to anything that identifies as a crawler
-#   therealdeal.com     every page, feed and even robots.txt return 403 to crawlers
-#   axios.com           Cloudflare challenge in front of every page, feeds included
-#   thenextmiami.com    robots.txt doesn't respond, which counts as "keep out"
-#   towers.net          feed works but hasn't been updated since 2018
-#   Open feeds whose robots.txt blocks AI bots (same reason as abc7):
-#     urbanize.city, universalhub.com, houstonpublicmedia.org, brownstoner.com,
-#     raleighmag.com, thebaltimorebanner.com (CCBot only)
-#   Feeds returning 403 to crawlers (checked 2026-11-23): Block Club Chicago,
-#     PubliCola, The Stranger, Austin Chronicle, CandysDirt, D Magazine,
-#     Houston Landing, Houstonia, INDY Week, NC Newsline, CommonWealth Beacon,
-#     Billy Penn, BridgeDetroit, Outlier Media, Model D, Voice of San Diego,
-#     Times of San Diego, San Antonio Report, San Antonio Current, Orlando
-#     Weekly, THE CITY, Gothamist, Baltimore Fishbowl, Washington City Paper,
-#     The DC Line, BikePortland, Oregon Capital Chronicle, Nashville Banner,
-#     Tennessee Lookout, The Mercury News, MinnPost, Sahan Journal,
-#     Finance & Commerce
-#   ggwash.org, newyorkyimby.com, texastribune.org, calmatters.org,
-#   nextcity.org, missionlocal.org: feeds return 403 to crawlers
+
 
 seeds:
   # ---- YIMBY groups and housing-focused --------------------------------
